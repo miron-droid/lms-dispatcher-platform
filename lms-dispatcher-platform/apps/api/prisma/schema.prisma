@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  MANAGER
+  ADMIN
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LessonType {
+  INTRO
+  THEORY
+  DEMO
+  PRACTICE
+  TEST
+  EXAM
+}
+
+enum ProgressStatus {
+  LOCKED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ExamDecision {
+  PASS
+  RETRY
+  DISBAND
+}
+
+enum ExamStatus {
+  REQUESTED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+// ── User ──────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole  @default(STUDENT)
+  isActive     Boolean   @default(true)
+  lastActiveAt DateTime?
+
+  managerId String?
+  manager   User?   @relation("ManagerStudents", fields: [managerId], references: [id])
+  students  User[]  @relation("ManagerStudents")
+
+  lessonProgress   LessonProgress[]
+  chapterProgress  ChapterProgress[]
+  testAttempts     TestAttempt[]
+  examRequests     ExamRequest[]     @relation("StudentExams")
+  examReviews      ExamRequest[]     @relation("ManagerExams")
+  pushSubscriptions PushSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([managerId])
+}
+
+// ── Course & structure ────────────────────────────────────────────────────────
+
+model Course {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  status      ContentStatus @default(DRAFT)
+  order       Int           @default(0)
+  chapters    Chapter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chapter {
+  id            String        @id @default(uuid())
+  courseId      String
+  course        Course        @relation(fields: [courseId], references: [id])
+  title         String
+  description   String?
+  order         Int
+  status        ContentStatus @default(DRAFT)
+  passThreshold Int           @default(80)
+
+  lessons         Lesson[]
+  questions       Question[]
+  chapterProgress ChapterProgress[]
+  examRequests    ExamRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId, order])
+}
+
+model Lesson {
+  id        String        @id @default(uuid())
+  chapterId String
+  chapter   Chapter       @relation(fields: [chapterId], references: [id])
+  type      LessonType
+  title     String
+  order     Int
+  status    ContentStatus @default(DRAFT)
+
+  // Flexible content blob per lesson type:
+  // TEXT   → { type:"text",     body: string }
+  // VIDEO  → { type:"video",    hlsUrl: string, posterUrl?: string }
+  // DIALOGUE → { type:"dialogue", messages:[{role:"broker"|"dispatcher",text}] }
+  // CASE   → { type:"case",     scenario:string, options:[{label,explanation}], correctIndex:number }
+  content Json?
+
+  lessonProgress LessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId, order])
+}
+
+// ── Questions (chapter test bank) ─────────────────────────────────────────────
+
+model Question {
+  id          String   @id @default(uuid())
+  chapterId   String
+  chapter     Chapter  @relation(fields: [chapterId], references: [id])
+  text        String
+  explanation String?
+  isMultiple  Boolean  @default(false)
+  order       Int      @default(0)
+  options     QuestionOption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId])
+}
+
+model QuestionOption {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
+}
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+
+model LessonProgress {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  lessonId    String
+  lesson      Lesson         @relation(fields: [lessonId], references: [id])
+  status      ProgressStatus @default(LOCKED)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model ChapterProgress {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  chapterId   String
+  chapter     Chapter        @relation(fields: [chapterId], references: [id])
+  status      ProgressStatus @default(LOCKED)
+  testPassed  Boolean        @default(false)
+  examPassed  Boolean        @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, chapterId])
+  @@index([userId])
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+model TestAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  chapterId   String
+  score       Int
+  passed      Boolean
+  // [{questionId, selectedOptionIds:string[], isCorrect}]
+  answers     Json
+  completedAt DateTime @default(now())
+
+  @@index([userId, chapterId])
+}
+
+// ── Exams ─────────────────────────────────────────────────────────────────────
+
+model ExamRequest {
+  id          String       @id @default(uuid())
+  studentId   String
+  student     User         @relation("StudentExams", fields: [studentId], references: [id])
+  managerId   String?
+  manager     User?        @relation("ManagerExams", fields: [managerId], references: [id])
+  chapterId   String
+  chapter     Chapter      @relation(fields: [chapterId], references: [id])
+  status      ExamStatus   @default(REQUESTED)
+  scheduledAt DateTime?
+  decision    ExamDecision?
+  comment     String?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([managerId, status])
+}
+
+// ── Push notifications ────────────────────────────────────────────────────────
+
+model PushSubscription {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  endpoint String
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+}
