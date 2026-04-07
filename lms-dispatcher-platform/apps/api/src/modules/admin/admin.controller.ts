@@ -3,10 +3,10 @@ import { AdminService } from './admin.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UpsertChapterDto } from './dto/upsert-chapter.dto';
 import { UpsertLessonDto } from './dto/upsert-lesson.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../common/enums';
 
 @Controller('admin')
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.MANAGER)
 export class AdminController {
   constructor(private admin: AdminService) {}
 
@@ -15,6 +15,9 @@ export class AdminController {
 
   @Get('analytics/students')
   studentAnalytics() { return this.admin.getStudentAnalytics(); }
+
+  @Get('analytics/detailed')
+  detailedProgress() { return this.admin.getDetailedProgress(); }
 
   @Post('courses/:courseId/chapters')
   upsertChapter(@Param('courseId') courseId: string, @Body() dto: UpsertChapterDto) {

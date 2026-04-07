@@ -1,7 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../common/enums';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -61,5 +61,41 @@ export class UsersService {
         },
       },
     });
+  }
+
+  async resetPassword(id: string, newPassword: string) {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    return this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+      select: { id: true, email: true },
+    });
+  }
+
+  async resetProgress(id: string) {
+    await this.prisma.testAttempt.deleteMany({ where: { userId: id } });
+    await this.prisma.lessonProgress.deleteMany({ where: { userId: id } });
+    await this.prisma.chapterProgress.deleteMany({ where: { userId: id } });
+
+    // Re-initialize: unlock first chapter + first lesson
+    const firstChapter = await this.prisma.chapter.findFirst({
+      where: { course: { status: 'PUBLISHED' }, status: 'PUBLISHED' },
+      orderBy: { order: 'asc' },
+    });
+    if (firstChapter) {
+      await this.prisma.chapterProgress.create({
+        data: { userId: id, chapterId: firstChapter.id, status: 'IN_PROGRESS' },
+      });
+      const firstLesson = await this.prisma.lesson.findFirst({
+        where: { chapterId: firstChapter.id, status: 'PUBLISHED' },
+        orderBy: { order: 'asc' },
+      });
+      if (firstLesson) {
+        await this.prisma.lessonProgress.create({
+          data: { userId: id, lessonId: firstLesson.id, status: 'IN_PROGRESS' },
+        });
+      }
+    }
+    return { reset: true };
   }
 }

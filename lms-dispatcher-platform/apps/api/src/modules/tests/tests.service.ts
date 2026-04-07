@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SubmitTestDto } from './dto/submit-test.dto';
-import { ProgressStatus } from '@prisma/client';
+import { ProgressStatus, ContentStatus } from '@prisma/client';
 
 @Injectable()
 export class TestsService {
@@ -76,9 +76,65 @@ export class TestsService {
         update: { testPassed: true },
         create: { userId, chapterId, testPassed: true, status: ProgressStatus.IN_PROGRESS },
       });
+
+      // Check if all lessons are also done — if so, complete chapter and unlock next
+      const chapterWithLessons = await this.prisma.chapter.findUnique({
+        where: { id: chapterId },
+        include: {
+          lessons: { where: { status: ContentStatus.PUBLISHED } },
+        },
+      });
+      if (chapterWithLessons) {
+        const allProgress = await this.prisma.lessonProgress.findMany({
+          where: { userId, lessonId: { in: chapterWithLessons.lessons.map((l) => l.id) } },
+        });
+        const allDone = chapterWithLessons.lessons.every((l) =>
+          allProgress.find((p) => p.lessonId === l.id)?.status === ProgressStatus.COMPLETED,
+        );
+        if (allDone) {
+          await this.completeChapterAndUnlockNext(userId, chapterId);
+        }
+      }
     }
 
     return { score, passed, threshold: chapter.passThreshold, results };
+  }
+
+  private async completeChapterAndUnlockNext(userId: string, chapterId: string) {
+    await this.prisma.chapterProgress.upsert({
+      where: { userId_chapterId: { userId, chapterId } },
+      update: { status: ProgressStatus.COMPLETED, examPassed: true },
+      create: { userId, chapterId, status: ProgressStatus.COMPLETED, testPassed: true, examPassed: true },
+    });
+
+    const currentChapter = await this.prisma.chapter.findUnique({
+      where: { id: chapterId },
+      select: { courseId: true, order: true },
+    });
+    if (!currentChapter) return;
+
+    const nextChapter = await this.prisma.chapter.findFirst({
+      where: { courseId: currentChapter.courseId, order: currentChapter.order + 1, status: ContentStatus.PUBLISHED },
+      include: {
+        lessons: { where: { status: ContentStatus.PUBLISHED }, orderBy: { order: 'asc' }, take: 1 },
+      },
+    });
+    if (!nextChapter) return;
+
+    await this.prisma.chapterProgress.upsert({
+      where: { userId_chapterId: { userId, chapterId: nextChapter.id } },
+      update: {},
+      create: { userId, chapterId: nextChapter.id, status: ProgressStatus.IN_PROGRESS },
+    });
+
+    const firstLesson = nextChapter.lessons[0];
+    if (firstLesson) {
+      await this.prisma.lessonProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId: firstLesson.id } },
+        update: {},
+        create: { userId, lessonId: firstLesson.id, status: ProgressStatus.IN_PROGRESS },
+      });
+    }
   }
 
   getAttempts(chapterId: string, userId: string) {

@@ -29,7 +29,8 @@ export interface Lesson {
   lessonProgress?: { status: ProgressStatus }[];
 }
 
-export interface TextContent    { type: 'text'; body: string }
+export interface QuizQuestion   { id: string; text: string; options: string[]; correctIndex: number }
+export interface TextContent    { type: 'text'; body: string; bodyRu?: string; quiz?: { questions: QuizQuestion[] }; quizRu?: { questions: QuizQuestion[] }; simulation?: boolean; freightMap?: boolean; equipmentMatcher?: boolean; phoneCall?: boolean; driverChat?: boolean; loadBoard?: boolean; negotiationGame?: boolean; crisisDashboard?: boolean; brokerCall?: boolean; dispatcherDay?: boolean }
 export interface VideoContent   { type: 'video'; hlsUrl: string; posterUrl?: string }
 export interface DialogueContent { type: 'dialogue'; messages: { role: 'broker' | 'dispatcher' | 'driver'; text: string }[] }
 export interface CaseContent    { type: 'case'; scenario: string; options: { label: string; explanation: string }[]; correctIndex: number }

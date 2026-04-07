@@ -54,7 +54,7 @@ export class LessonsService {
       });
     }
 
-    // Check if all lessons in chapter are done — update chapter progress
+    // Check if all lessons in chapter are done
     const allProgress = await this.prisma.lessonProgress.findMany({
       where: { userId, lessonId: { in: lessons.map((l) => l.id) } },
     });
@@ -63,13 +63,50 @@ export class LessonsService {
     );
 
     if (allDone) {
-      await this.prisma.chapterProgress.upsert({
-        where: { userId_chapterId: { userId, chapterId: lesson.chapterId } },
-        update: { status: ProgressStatus.IN_PROGRESS },
-        create: { userId, chapterId: lesson.chapterId, status: ProgressStatus.IN_PROGRESS },
-      });
+      await this.completeChapterAndUnlockNext(userId, lesson.chapterId);
     }
 
     return { completed: true, nextLessonId: next?.id ?? null };
+  }
+
+  private async completeChapterAndUnlockNext(userId: string, chapterId: string) {
+    // Mark current chapter as COMPLETED
+    await this.prisma.chapterProgress.upsert({
+      where: { userId_chapterId: { userId, chapterId } },
+      update: { status: ProgressStatus.COMPLETED },
+      create: { userId, chapterId, status: ProgressStatus.COMPLETED, testPassed: true },
+    });
+
+    // Find next chapter in the same course
+    const currentChapter = await this.prisma.chapter.findUnique({
+      where: { id: chapterId },
+      select: { courseId: true, order: true },
+    });
+    if (!currentChapter) return;
+
+    const nextChapter = await this.prisma.chapter.findFirst({
+      where: { courseId: currentChapter.courseId, order: currentChapter.order + 1, status: ContentStatus.PUBLISHED },
+      include: {
+        lessons: { where: { status: ContentStatus.PUBLISHED }, orderBy: { order: 'asc' }, take: 1 },
+      },
+    });
+    if (!nextChapter) return;
+
+    // Unlock next chapter
+    await this.prisma.chapterProgress.upsert({
+      where: { userId_chapterId: { userId, chapterId: nextChapter.id } },
+      update: {},
+      create: { userId, chapterId: nextChapter.id, status: ProgressStatus.IN_PROGRESS },
+    });
+
+    // Unlock first lesson of next chapter
+    const firstLesson = nextChapter.lessons[0];
+    if (firstLesson) {
+      await this.prisma.lessonProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId: firstLesson.id } },
+        update: {},
+        create: { userId, lessonId: firstLesson.id, status: ProgressStatus.IN_PROGRESS },
+      });
+    }
   }
 }

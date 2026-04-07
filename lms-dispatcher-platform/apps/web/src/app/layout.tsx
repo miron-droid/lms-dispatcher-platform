@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LMS — Dispatcher Training',
-  description: 'Logistics dispatcher training platform',
+  title: 'DispatchGO — Dispatcher Training',
+  description: 'From zero to first deal — dispatcher training platform',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'LMS' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'DispatchGO' },
 };
 
 export const viewport: Viewport = {

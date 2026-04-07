@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RequestExamDto } from './dto/request-exam.dto';
 import { ReviewExamDto } from './dto/review-exam.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ExamDecision, ExamStatus, ProgressStatus, UserRole } from '@prisma/client';
+import { ExamDecision, ExamStatus, ProgressStatus, UserRole } from '../../common/enums';
 
 @Injectable()
 export class ExamsService {

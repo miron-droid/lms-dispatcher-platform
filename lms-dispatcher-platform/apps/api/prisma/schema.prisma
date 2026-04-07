@@ -69,6 +69,7 @@ model User {
   testAttempts     TestAttempt[]
   examRequests     ExamRequest[]     @relation("StudentExams")
   examReviews      ExamRequest[]     @relation("ManagerExams")
+  dailyExams       DailyExam[]
   pushSubscriptions PushSubscription[]
 
   createdAt DateTime @default(now())
@@ -238,6 +239,24 @@ model ExamRequest {
 
   @@index([studentId])
   @@index([managerId, status])
+}
+
+// ── Daily Exams (post-course, 1 per day, 20 total) ───────────────────────────
+
+model DailyExam {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  examNumber Int
+  score      Int       @default(0)
+  passed     Boolean   @default(false)
+  answers    Json      @default("[]")
+  unlockedAt DateTime  @default(now())
+  completedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, examNumber])
+  @@index([userId])
 }
 
 // ── Push notifications ────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import { TestsModule } from './modules/tests/tests.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { DailyExamsModule } from './modules/daily-exams/daily-exams.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AdminModule } from './modules/admin/admin.module';
     ExamsModule,
     NotificationsModule,
     AdminModule,
+    DailyExamsModule,
   ],
 })
 export class AppModule {}

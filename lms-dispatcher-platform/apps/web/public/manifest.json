@@ -1,7 +1,7 @@
 {
-  "name": "LMS Dispatcher Training",
-  "short_name": "LMS",
-  "description": "Dispatcher Training Platform",
+  "name": "DispatchGO — Dispatcher Training",
+  "short_name": "DispatchGO",
+  "description": "From zero to first deal — dispatcher training platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
