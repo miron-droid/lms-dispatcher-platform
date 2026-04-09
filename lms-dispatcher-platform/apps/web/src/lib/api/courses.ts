@@ -17,7 +17,13 @@ export const coursesApi = {
     ),
 
   getLesson: (lessonId: string) =>
-    apiFetch<{ lesson: Lesson; progress: any }>(`/lessons/${lessonId}`),
+    apiFetch<{
+      lesson: Lesson;
+      progress: any;
+      hasQuiz?: boolean;
+      quizPassed?: boolean;
+      bestQuizScore?: number | null;
+    }>(`/lessons/${lessonId}`),
 
   completeLesson: (lessonId: string) =>
     apiFetch<{ completed: boolean; nextLessonId: string | null }>(

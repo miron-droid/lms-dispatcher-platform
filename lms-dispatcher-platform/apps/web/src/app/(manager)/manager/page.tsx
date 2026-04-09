@@ -30,7 +30,7 @@ export default function ManagerDashboard() {
     let diff = 0;
     if (sortBy === 'name') diff = a.name.localeCompare(b.name);
     else if (sortBy === 'progress') diff = a.completedChapters - b.completedChapters || a.totalLessons - b.totalLessons;
-    else diff = (a.avgScore ?? -1) - (b.avgScore ?? -1);
+    else diff = (a.totalXP ?? 0) - (b.totalXP ?? 0);
     return sortAsc ? diff : -diff;
   });
 
@@ -93,7 +93,7 @@ export default function ManagerDashboard() {
                     <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">{s.name.charAt(0)}</div>
                     <span className="text-sm text-gray-900 dark:text-[#f5f5f7] flex-1 truncate">{s.name}</span>
                     <span className="text-xs font-mono text-gray-500 dark:text-[#a1a1a6]">{s.completedChapters}/9 {lang === 'ru' ? 'гл' : 'ch'}</span>
-                    <span className="text-sm font-mono font-bold text-emerald-600">{s.avgScore != null ? `${s.avgScore}%` : '—'}</span>
+                    <span className="text-sm font-mono font-bold text-emerald-600">{s.totalXP ?? 0} XP</span>
                   </div>
                 ))}
               </div>
@@ -114,7 +114,7 @@ export default function ManagerDashboard() {
                     <div className="w-6 h-6 rounded-md bg-red-100 flex items-center justify-center text-[10px] font-bold text-red-700">{s.name.charAt(0)}</div>
                     <span className="text-sm text-gray-900 dark:text-[#f5f5f7] flex-1 truncate">{s.name}</span>
                     <span className="text-xs font-mono text-gray-500 dark:text-[#a1a1a6]">{s.completedChapters}/9 {lang === 'ru' ? 'гл' : 'ch'}</span>
-                    <span className="text-sm font-mono font-bold text-red-500">{s.avgScore != null ? `${s.avgScore}%` : '—'}</span>
+                    <span className="text-sm font-mono font-bold text-red-500">{s.totalXP ?? 0} XP</span>
                   </div>
                 ))}
               </div>
@@ -122,6 +122,52 @@ export default function ManagerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Test Activity Alert */}
+      {detailed.length > 0 && (() => {
+        const noTests = detailed.filter(s => s.testAttemptsCount === 0);
+        const noQuizzes = detailed.filter(s => s.quizAttemptsCount === 0);
+        const skipping = detailed.filter(s => s.totalLessons > 0 && s.testAttemptsCount === 0);
+        return (
+          <div className="card p-4 border-amber-300 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-[#f5f5f7]">
+                {lang === 'ru' ? 'Активность тестов' : 'Test Activity'}
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              <div className="bg-white/60 dark:bg-white/5 rounded-lg p-2.5">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{noTests.length}</p>
+                <p className="text-[10px] text-gray-600 dark:text-[#a1a1a6] uppercase">{lang === 'ru' ? 'Не сдали тестов' : 'No final tests'}</p>
+              </div>
+              <div className="bg-white/60 dark:bg-white/5 rounded-lg p-2.5">
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{noQuizzes.length}</p>
+                <p className="text-[10px] text-gray-600 dark:text-[#a1a1a6] uppercase">{lang === 'ru' ? 'Не делали квизов' : 'No quizzes'}</p>
+              </div>
+              <div className="bg-white/60 dark:bg-white/5 rounded-lg p-2.5">
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{skipping.length}</p>
+                <p className="text-[10px] text-gray-600 dark:text-[#a1a1a6] uppercase">{lang === 'ru' ? 'Листают без тестов' : 'Skipping tests'}</p>
+              </div>
+            </div>
+            {skipping.length > 0 && (
+              <div className="space-y-1.5 mt-2 pt-2 border-t border-amber-200 dark:border-amber-500/20">
+                <p className="text-[10px] uppercase text-gray-500 dark:text-[#636366] font-semibold">
+                  {lang === 'ru' ? 'Студенты, которые читают уроки но не сдают тесты:' : 'Students reading lessons but skipping tests:'}
+                </p>
+                {skipping.map(s => (
+                  <Link key={s.id} href={`/manager/students/${s.id}`} className="flex items-center gap-2 text-sm hover:bg-white/80 dark:hover:bg-white/5 rounded-md px-2 py-1 cursor-pointer">
+                    <div className="w-5 h-5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-[10px] font-bold">{s.name.charAt(0)}</div>
+                    <span className="text-gray-900 dark:text-[#f5f5f7] flex-1 truncate">{s.name}</span>
+                    <span className="text-xs font-mono text-gray-500 dark:text-[#a1a1a6]">{s.totalLessons} {lang === 'ru' ? 'уроков' : 'lessons'}</span>
+                    <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">0 {lang === 'ru' ? 'тестов' : 'tests'}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Main progress table */}
       <div className="card p-0 overflow-hidden">
@@ -140,7 +186,7 @@ export default function ManagerDashboard() {
         ) : (
           <>
             {/* Header */}
-            <div className="hidden lg:flex items-center px-5 py-2 bg-gray-50/80 border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)] gap-1">
+            <div className="hidden lg:flex items-center px-5 py-2 bg-gray-50/80 dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)] gap-1">
               <SortHeader label={lang === 'ru' ? 'Студент' : 'Student'} field="name" current={sortBy} asc={sortAsc} onClick={toggleSort} className="w-36" />
               <div className="flex-1 flex items-center gap-0">
                 {CH_NAMES.map((n, i) => (
@@ -180,7 +226,7 @@ function StudentRow({ student: s, rank, lang }: { student: DetailedStudent; rank
   const rankColor = rank <= 3 ? 'text-amber-500' : rank >= (10) ? 'text-red-400' : 'text-gray-400 dark:text-[#636366]';
 
   return (
-    <div className="flex items-center px-5 py-2.5 gap-1 hover:bg-gray-50/50 transition-colors group relative">
+    <Link href={`/manager/students/${s.id}`} className="flex items-center px-5 py-2.5 gap-1 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors group relative cursor-pointer">
       {/* Rank + Name */}
       <div className="w-36 flex items-center gap-2 flex-shrink-0">
         <span className={cn('text-[10px] font-bold font-mono w-4', rankColor)}>#{rank}</span>
@@ -246,13 +292,13 @@ function StudentRow({ student: s, rank, lang }: { student: DetailedStudent; rank
       {/* Score */}
       <div className="w-20 text-right">
         <span className={cn('text-sm font-bold font-mono',
-          s.avgScore == null ? 'text-gray-300 dark:text-[#636366]' :
-          s.avgScore >= 80 ? 'text-emerald-600' :
-          s.avgScore >= 60 ? 'text-amber-600' : 'text-red-500'
+          (s.totalXP ?? 0) === 0 ? 'text-gray-300 dark:text-[#636366]' :
+          (s.totalXP ?? 0) >= 1000 ? 'text-emerald-600' :
+          (s.totalXP ?? 0) >= 300 ? 'text-amber-600' : 'text-gray-600 dark:text-[#a1a1a6]'
         )}>
-          {s.avgScore != null ? `${s.avgScore}%` : '—'}
+          {(s.totalXP ?? 0) > 0 ? `${s.totalXP} XP` : '—'}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }

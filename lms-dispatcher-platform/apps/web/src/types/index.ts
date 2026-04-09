@@ -11,6 +11,10 @@ export interface User {
   lastName: string;
   role: UserRole;
   managerId?: string;
+  totalXP?: number;
+  streak?: number;
+  level?: number;
+  achievements?: string[];
 }
 
 export interface Chapter {
@@ -44,6 +48,8 @@ export interface ChapterProgressItem {
   examPassed: boolean;
   lessonsTotal: number;
   lessonsCompleted: number;
+  quizzesTotal?: number;
+  quizzesPassed?: number;
 }
 
 export interface CourseProgress {

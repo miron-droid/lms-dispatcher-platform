@@ -71,6 +71,12 @@ model User {
   examReviews      ExamRequest[]     @relation("ManagerExams")
   dailyExams       DailyExam[]
   pushSubscriptions PushSubscription[]
+  quizAttempts     QuizAttempt[]
+
+  totalXP        Int       @default(0)
+  streak         Int       @default(0)
+  lastStudyDate  DateTime?
+  achievements   String[]  @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,6 +138,7 @@ model Lesson {
   content Json?
 
   lessonProgress LessonProgress[]
+  quizAttempts   QuizAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -272,4 +279,22 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@unique([userId, endpoint])
+}
+
+
+// ── Quiz Attempts (per-lesson quizzes inside Lesson.content) ─────────────────
+
+model QuizAttempt {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  lessonId        String
+  lesson          Lesson   @relation(fields: [lessonId], references: [id])
+  score           Int
+  totalQuestions  Int
+  correctAnswers  Int
+  answers         Json
+  completedAt     DateTime @default(now())
+
+  @@index([userId, lessonId])
 }

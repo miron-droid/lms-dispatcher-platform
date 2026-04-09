@@ -13,6 +13,15 @@ import { NegotiationGame } from '@/components/domain/negotiation-game';
 import { CrisisDashboard } from '@/components/domain/crisis-dashboard';
 import { DispatcherDaySimulator } from '@/components/domain/dispatcher-day-simulator';
 import { BrokerCallSimulator } from '@/components/domain/broker-call-simulator';
+import { quizApi } from '@/lib/api/quiz';
+import { authApi } from '@/lib/api/auth';
+import { useAuthStore } from '@/lib/stores/auth.store';
+import { useGamificationToast, ACHIEVEMENTS } from '@/lib/stores/gamification.store';
+import { useQueryClient } from '@tanstack/react-query';
+import { CheckCircle2, Lock } from 'lucide-react';
+
+// Quiz pass threshold — mirrors backend.
+const QUIZ_PASS_THRESHOLD = 80;
 
 type Content = TextContent | VideoContent | DialogueContent | CaseContent | undefined;
 
@@ -26,7 +35,6 @@ function useScrollReveal(containerRef: React.RefObject<HTMLDivElement | null>) {
       'h2, h3, p, blockquote, ul, ol, .scroll-reveal'
     );
 
-    // stagger initial delay based on DOM order
     targets.forEach((t, i) => {
       t.classList.add('sr-item');
       t.style.transitionDelay = `${Math.min(i * 30, 150)}ms`;
@@ -49,12 +57,12 @@ function useScrollReveal(containerRef: React.RefObject<HTMLDivElement | null>) {
   }, [containerRef]);
 }
 
-export function LessonContent({ content }: { content: Content }) {
+export function LessonContent({ content, lessonId }: { content: Content; lessonId?: string }) {
   const { t } = useLang();
   if (!content) return <p className="text-gray-400 dark:text-[#636366] italic">{t('lesson_no_content')}</p>;
 
   switch (content.type) {
-    case 'text':     return <TextRenderer c={content} />;
+    case 'text':     return <TextRenderer c={content} lessonId={lessonId} />;
     case 'video':    return <VideoRenderer c={content} />;
     case 'dialogue': return <DialogueRenderer c={content} />;
     case 'case':     return <CaseRenderer c={content} />;
@@ -62,7 +70,7 @@ export function LessonContent({ content }: { content: Content }) {
   }
 }
 
-function TextRenderer({ c }: { c: TextContent }) {
+function TextRenderer({ c, lessonId }: { c: TextContent; lessonId?: string }) {
   const { lang } = useLang();
   const body = (lang === 'ru' && c.bodyRu) ? c.bodyRu : c.body;
   const quiz = (lang === 'ru' && c.quizRu) ? c.quizRu : c.quiz;
@@ -96,7 +104,11 @@ function TextRenderer({ c }: { c: TextContent }) {
       {c.crisisDashboard && <CrisisDashboard />}
       {(c.dispatcherDay || body.includes("<!-- dispatcher-day-sim -->")) && <DispatcherDaySimulator />}
       {c.brokerCall && <BrokerCallSimulator />}
-      {quiz && <QuizRenderer questions={quiz.questions} />}
+      {quiz && (
+        <div id="lesson-quiz-section">
+          <QuizRenderer questions={quiz.questions} lessonId={lessonId} />
+        </div>
+      )}
       {c.simulation && <SimulationBlock />}
     </div>
   );
@@ -113,16 +125,18 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-interface PreparedQuestion { text: string; options: string[]; correctIndex: number }
+interface PreparedQuestion { text: string; options: string[]; correctIndex: number; originalIndex: number }
 
 function prepareQuestions(questions: QuizQuestion[]): PreparedQuestion[] {
-  return shuffle(questions).map(q => {
+  const indexedAll = questions.map((q, originalIndex) => ({ q, originalIndex }));
+  return shuffle(indexedAll).map(({ q, originalIndex }) => {
     const indexed = q.options.map((opt, i) => ({ opt, correct: i === q.correctIndex }));
     const shuffled = shuffle(indexed);
     return {
       text: q.text,
       options: shuffled.map(x => x.opt),
       correctIndex: shuffled.findIndex(x => x.correct),
+      originalIndex,
     };
   });
 }
@@ -133,14 +147,20 @@ const FEEDBACK_DELAY = 1500;
 
 // ── Quiz Renderer ─────────────────────────────────────────────────────────────
 
-function QuizRenderer({ questions }: { questions: QuizQuestion[] }) {
-  const { t } = useLang();
+function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; lessonId?: string }) {
+  const { t, lang } = useLang();
+  const setUser = useAuthStore((s) => s.setUser);
+  const showToast = useGamificationToast((s) => s.showToast);
+  const qc = useQueryClient();
+
   const [attempt, setAttempt]     = useState(0);
   const [prepared, setPrepared]   = useState<PreparedQuestion[]>(() => prepareQuestions(questions));
   const [current, setCurrent]     = useState(0);
   const [selected, setSelected]   = useState<number | null>(null);
   const [score, setScore]         = useState(0);
   const [finished, setFinished]   = useState(false);
+  const [answers, setAnswers]     = useState<number[]>([]);
+  const [submitted, setSubmitted] = useState(false);
 
   // Re-prepare questions when the questions array changes (language switch)
   useEffect(() => {
@@ -150,12 +170,16 @@ function QuizRenderer({ questions }: { questions: QuizQuestion[] }) {
     setScore(0);
     setFinished(false);
     setAttempt(0);
+    setAnswers([]);
+    setSubmitted(false);
   }, [questions]);
 
   const total   = prepared.length;
   const q       = prepared[current];
-  const percent = Math.round((score / total) * 100);
-  const passed  = score >= total - 2;
+  const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+  // Quiz is considered passed only at >= 80% — this matches the lesson page
+  // gating and the backend enforcement in lessons.service.ts.
+  const passed  = percent >= QUIZ_PASS_THRESHOLD;
 
   const advance = useCallback(() => {
     if (current + 1 >= total) {
@@ -168,14 +192,77 @@ function QuizRenderer({ questions }: { questions: QuizQuestion[] }) {
 
   useEffect(() => {
     if (selected === null) return;
-    const t = setTimeout(advance, FEEDBACK_DELAY);
-    return () => clearTimeout(t);
+    const tm = setTimeout(advance, FEEDBACK_DELAY);
+    return () => clearTimeout(tm);
   }, [selected, advance]);
+
+  // Submit attempt to backend once when finished
+  useEffect(() => {
+    if (!finished || submitted || !lessonId) return;
+    setSubmitted(true);
+    (async () => {
+      try {
+        const res = await quizApi.submit({
+          lessonId,
+          answers,
+          totalQuestions: total,
+          correctAnswers: score,
+          score: percent,
+        });
+
+        // Invalidate the student's quiz-attempts cache so the lesson page
+        // re-evaluates the gate (enables "Mark Complete" if passed).
+        qc.invalidateQueries({ queryKey: ['quiz-attempts', 'me'] });
+        qc.invalidateQueries({ queryKey: ['lesson', lessonId] });
+
+        // On pass, nudge the student to the "Mark Complete" button at the
+        // bottom of the lesson page so they finish the flow.
+        if (percent >= QUIZ_PASS_THRESHOLD) {
+          setTimeout(() => {
+            const btn = document.querySelector<HTMLElement>('button.btn-primary');
+            btn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 600);
+        }
+
+        // Refresh user from /auth/me to update XP/streak/level/achievements
+        try {
+          const fresh = await authApi.me();
+          setUser(fresh);
+        } catch { /* ignore */ }
+
+        // Toast: show new achievement if any, else XP earned
+        if (res.newAchievements && res.newAchievements.length > 0) {
+          const id = res.newAchievements[0];
+          const meta = ACHIEVEMENTS.find(a => a.id === id);
+          showToast({
+            emoji: meta?.emoji ?? '🏅',
+            title: meta ? (lang === 'ru' ? meta.nameRu : meta.name) : (lang === 'ru' ? 'Новое достижение' : 'New achievement'),
+            subtitle: `+${res.xpEarned} XP`,
+          });
+        } else if (res.xpEarned > 0) {
+          showToast({
+            emoji: '⚡',
+            title: `+${res.xpEarned} XP`,
+            subtitle: lang === 'ru' ? 'Квиз пройден' : 'Quiz complete',
+          });
+        }
+      } catch (e) {
+        // Network/backend error — fail silently so user can still continue
+        console.error('Quiz submit failed', e);
+      }
+    })();
+  }, [finished, submitted, lessonId, answers, total, score, percent, setUser, showToast, lang]);
 
   const handleSelect = (idx: number) => {
     if (selected !== null) return;
     if (idx === q.correctIndex) setScore(s => s + 1);
     setSelected(idx);
+    // Record this answer at the original question index for backend
+    setAnswers(prev => {
+      const next = [...prev];
+      next[q.originalIndex] = idx;
+      return next;
+    });
   };
 
   const retry = () => {
@@ -186,23 +273,55 @@ function QuizRenderer({ questions }: { questions: QuizQuestion[] }) {
     setSelected(null);
     setScore(0);
     setFinished(false);
+    setAnswers([]);
+    setSubmitted(false);
   };
 
   // ── Result screen ──
   if (finished) {
     return (
-      <div className="mt-8 rounded-2xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e] p-6 lg:p-8 text-center space-y-4 lg:max-w-xl lg:mx-auto">
-        <p className="text-4xl font-bold text-gray-900 dark:text-[#f5f5f7]">{percent}%</p>
-        <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">{score} {t('quiz_out_of')} {total} {t('quiz_correct')}</p>
+      <div
+        className={cn(
+          'mt-8 rounded-2xl border p-6 lg:p-8 text-center space-y-4 lg:max-w-xl lg:mx-auto transition-all',
+          passed
+            ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 shadow-lg shadow-emerald-500/10'
+            : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e]',
+        )}
+      >
+        {passed && (
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
+        )}
+
+        <p className={cn(
+          'text-5xl font-bold',
+          passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-[#f5f5f7]',
+        )}>
+          {percent}%
+        </p>
+        <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">
+          {score} {t('quiz_out_of')} {total} {t('quiz_correct')}
+        </p>
 
         {passed ? (
           <>
-            <p className="text-green-600 dark:text-emerald-400 font-semibold text-lg">{t('quiz_goal_achieved')}</p>
-            <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">{t('quiz_proceed')}</p>
+            <p className="text-emerald-600 dark:text-emerald-400 font-bold text-xl">
+              {t('quiz_goal_achieved')}
+            </p>
+            <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 font-medium">
+              {t('quiz_success_banner')}
+            </p>
           </>
         ) : (
           <>
             <p className="text-red-500 font-semibold text-lg">{t('quiz_goal_not_achieved')}</p>
+            <p className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-[#a1a1a6]">
+              <Lock className="w-3.5 h-3.5" />
+              {t('quiz_locked_hint')}
+            </p>
             {attempt + 1 >= MAX_ATTEMPTS ? (
               <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">{t('quiz_review_material')}</p>
             ) : (

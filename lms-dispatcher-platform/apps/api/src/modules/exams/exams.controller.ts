@@ -5,7 +5,7 @@ import { ReviewExamDto } from './dto/review-exam.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/types/authenticated-request.type';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../../common/enums';
+import { UserRole } from '@prisma/client';
 
 @Controller('exams')
 export class ExamsController {

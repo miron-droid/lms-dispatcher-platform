@@ -42,12 +42,15 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    return this.prisma.user.findUniqueOrThrow({
+    const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: {
         id: true, email: true, firstName: true, lastName: true,
         role: true, managerId: true, lastActiveAt: true,
+        totalXP: true, streak: true, lastStudyDate: true, achievements: true,
       },
     });
+    const { levelFromXP } = await import('../quiz-attempts/gamification');
+    return { ...user, level: levelFromXP(user.totalXP ?? 0) };
   }
 }

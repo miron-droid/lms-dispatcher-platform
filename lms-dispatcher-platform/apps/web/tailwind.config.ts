@@ -42,6 +42,8 @@ const config: Config = {
         'float': 'float 3s ease-in-out infinite',
         'fade-in-up': 'fade-in-up 0.5s ease-out both',
         'slide-in-right': 'slide-in-right 0.3s ease-out both',
+        'fadein': 'fadein 0.25s ease-out both',
+        'bounce-slow': 'bounce-slow 1.4s ease-in-out infinite',
       },
       keyframes: {
         'float': {
@@ -55,6 +57,14 @@ const config: Config = {
         'slide-in-right': {
           '0%': { opacity: '0', transform: 'translateX(-12px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'fadein': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'bounce-slow': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
         },
       },
     },

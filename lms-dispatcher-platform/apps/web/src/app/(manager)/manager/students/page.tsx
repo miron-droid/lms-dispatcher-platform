@@ -4,6 +4,7 @@ import { adminApi, type StudentAnalytics } from '@/lib/api/admin';
 import { useLang } from '@/lib/i18n/lang-context';
 import { useState } from 'react';
 import { UserPlus, Search, X, Trash2, Key, RotateCcw, Settings, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export default function StudentsPage() {
@@ -49,7 +50,11 @@ export default function StudentsPage() {
           const activeDays = s.lastActiveAt ? Math.round((Date.now() - new Date(s.lastActiveAt).getTime()) / 86400000) : null;
 
           return (
-            <div key={s.id} className="card flex items-center gap-4 group">
+            <Link
+              key={s.id}
+              href={`/manager/students/${s.id}`}
+              className="card flex items-center gap-4 group cursor-pointer hover:border-gray-300 dark:hover:border-white/[0.16] hover:bg-gray-50/50 dark:hover:bg-[#2c2c2e]/50 transition-colors"
+            >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
                 {s.name?.charAt(0)}
@@ -80,13 +85,16 @@ export default function StudentsPage() {
 
               {/* Settings button */}
               <button
-                onClick={() => setSettingsFor(s)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSettingsFor(s); }}
                 className="p-2 text-gray-300 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7] hover:bg-gray-100 dark:hover:bg-[#3a3a3c] rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 lg:opacity-100"
                 title={lang === 'ru' ? 'Настройки' : 'Settings'}
               >
                 <Settings className="w-4 h-4" />
               </button>
-            </div>
+
+              {/* Chevron */}
+              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-[#636366] group-hover:text-gray-500 dark:group-hover:text-[#a1a1a6] transition-colors flex-shrink-0" />
+            </Link>
           );
         })}
       </div>

@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const setUser = useAuthStore((s) => s.setUser);
   const router = useRouter();
   const { t } = useLang();
 
@@ -24,6 +25,13 @@ export default function LoginPage() {
     try {
       const { accessToken, user } = await authApi.login(email, password);
       setAuth(user, accessToken);
+      // Fetch enriched profile (XP/streak/level/achievements) from /auth/me
+      try {
+        const fullUser = await authApi.me();
+        setUser(fullUser);
+      } catch {
+        /* ignore — base user is fine */
+      }
       if (user.role === 'ADMIN' || user.role === 'MANAGER') router.replace('/manager');
       else router.replace('/learn');
     } catch (err: any) {

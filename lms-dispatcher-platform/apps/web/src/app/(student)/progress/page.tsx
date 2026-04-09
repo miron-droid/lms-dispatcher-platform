@@ -1,5 +1,5 @@
 'use client';
-import { useGamification, LEVELS, ACHIEVEMENTS, HIGHWAY_CITIES } from '@/lib/stores/gamification.store';
+import { useGamification, LEVELS, ACHIEVEMENTS } from '@/lib/stores/gamification.store';
 import { useLang } from '@/lib/i18n/lang-context';
 import { useQuery } from '@tanstack/react-query';
 import { coursesApi } from '@/lib/api/courses';
@@ -19,6 +19,9 @@ export default function ProgressPage() {
     queryKey: ['progress', COURSE_ID],
     queryFn: () => coursesApi.getProgress(COURSE_ID),
   });
+
+  // Derived from server-side progress data
+  const totalLessonsCompleted = (data?.chapters ?? []).reduce((acc, c) => acc + (c.lessonsCompleted ?? 0), 0);
 
   return (
     <div className="max-w-lg lg:max-w-3xl mx-auto px-4 lg:px-6 pt-6 pb-8">
@@ -61,7 +64,7 @@ export default function ProgressPage() {
       {/* Stats grid */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="card p-3 text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-[#f5f5f7]">{g.totalLessons}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-[#f5f5f7]">{totalLessonsCompleted}</p>
           <p className="text-xs text-gray-400 dark:text-[#636366]">{lang === 'ru' ? 'уроков' : 'lessons'}</p>
         </div>
         <div className="card p-3 text-center">

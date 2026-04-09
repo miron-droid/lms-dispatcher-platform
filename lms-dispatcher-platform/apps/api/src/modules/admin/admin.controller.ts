@@ -19,6 +19,11 @@ export class AdminController {
   @Get('analytics/detailed')
   detailedProgress() { return this.admin.getDetailedProgress(); }
 
+  @Get('students/:userId/details')
+  studentDetails(@Param('userId') userId: string) {
+    return this.admin.getStudentDetails(userId);
+  }
+
   @Post('courses/:courseId/chapters')
   upsertChapter(@Param('courseId') courseId: string, @Body() dto: UpsertChapterDto) {
     return this.admin.upsertChapter(courseId, dto);
@@ -44,4 +49,14 @@ export class AdminController {
 
   @Delete('questions/:id')
   deleteQuestion(@Param('id') id: string) { return this.admin.deleteQuestion(id); }
+
+  @Post('students/:userId/chapters/:chapterId/unlock')
+  unlockChapter(@Param('userId') userId: string, @Param('chapterId') chapterId: string) {
+    return this.admin.unlockChapter(userId, chapterId);
+  }
+
+  @Post('students/:userId/chapters/:chapterId/complete')
+  completeChapter(@Param('userId') userId: string, @Param('chapterId') chapterId: string) {
+    return this.admin.completeChapter(userId, chapterId);
+  }
 }

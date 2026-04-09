@@ -5,6 +5,7 @@ interface AuthStore {
   user: User | null;
   token: string | null;
   setAuth: (user: User, token: string) => void;
+  setUser: (user: User) => void;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
 }
@@ -18,8 +19,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ user, token });
   },
 
+  setUser: (user) => set({ user }),
+
   clearAuth: () => {
-    if (typeof window !== 'undefined') localStorage.removeItem('access_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      // Clean up any legacy gamification data
+      localStorage.removeItem('lms_gamification');
+    }
     set({ user: null, token: null });
   },
 

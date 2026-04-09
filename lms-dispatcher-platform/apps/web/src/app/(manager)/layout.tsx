@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Menu, X, Sun, Moon } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { Logo } from '@/components/domain/logo';
 import { useLang } from '@/lib/i18n/lang-context';
 import { LangToggle } from '@/components/layout/lang-toggle';
+import { useTheme } from '@/lib/theme-context';
 import { Providers } from '@/components/providers';
 
 function ManagerShell({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
   const user = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.clearAuth);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { resolved, setTheme } = useTheme();
   const NAV = [
     { href: '/manager',       label: lang === 'ru' ? 'Дашборд' : 'Dashboard',  icon: LayoutDashboard, exact: true, badge: 0 },
     { href: '/manager/students', label: lang === 'ru' ? 'Студенты' : 'Students', icon: Users, badge: 0 },
@@ -31,7 +33,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-surface-secondary">
+    <div className="min-h-screen bg-surface-secondary dark:bg-black">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-[#2c2c2e] border-r border-gray-100 dark:border-[rgba(255,255,255,0.06)] z-50 flex-col">
         <div className="px-4 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)]">
@@ -61,6 +63,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="px-3 pb-4 space-y-2">
+          <button onClick={() => setTheme(resolved === "dark" ? "light" : "dark")} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-[#a1a1a6] hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl w-full cursor-pointer transition-colors">{resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}{resolved === "dark" ? (lang === "ru" ? "Светлая" : "Light") : (lang === "ru" ? "Тёмная" : "Dark")}</button>
           <LangToggle />
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-[#a1a1a6]">
             <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
@@ -101,7 +104,8 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
           <div className="pt-4 border-t border-gray-100 dark:border-[rgba(255,255,255,0.06)]">
-            <LangToggle />
+            <button onClick={() => setTheme(resolved === "dark" ? "light" : "dark")} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-[#a1a1a6] hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl w-full cursor-pointer transition-colors">{resolved === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}{resolved === "dark" ? (lang === "ru" ? "Светлая" : "Light") : (lang === "ru" ? "Тёмная" : "Dark")}</button>
+          <LangToggle />
             <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 w-full cursor-pointer">
               <LogOut className="w-4 h-4" />
               {lang === 'ru' ? 'Выйти' : 'Logout'}

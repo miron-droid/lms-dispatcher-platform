@@ -13,6 +13,7 @@ import { ExamsModule } from './modules/exams/exams.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { DailyExamsModule } from './modules/daily-exams/daily-exams.module';
+import { QuizAttemptsModule } from './modules/quiz-attempts/quiz-attempts.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DailyExamsModule } from './modules/daily-exams/daily-exams.module';
     NotificationsModule,
     AdminModule,
     DailyExamsModule,
+    QuizAttemptsModule,
   ],
 })
 export class AppModule {}

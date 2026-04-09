@@ -76,6 +76,29 @@ export function ChapterCard({ chapter }: Props) {
             {chapter.lessonsCompleted}/{chapter.lessonsTotal}
           </span>
         </div>
+
+        {/* Quizzes passed indicator + chapter-test lock */}
+        {(chapter.quizzesTotal ?? 0) > 0 && (
+          <div className="flex items-center gap-2 mt-2">
+            <span className={cn(
+              'inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md tabular-nums',
+              (chapter.quizzesPassed ?? 0) >= (chapter.quizzesTotal ?? 0)
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+                : 'bg-gray-100 text-gray-500 dark:bg-[#2c2c2e] dark:text-[#a1a1a6]',
+            )}>
+              {(chapter.quizzesPassed ?? 0) >= (chapter.quizzesTotal ?? 0) ? '✅' : '❓'}
+              {chapter.quizzesPassed ?? 0}/{chapter.quizzesTotal} {t('chapter_quizzes_passed')}
+            </span>
+            {(chapter.quizzesPassed ?? 0) < (chapter.quizzesTotal ?? 0) && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-[#636366]"
+                title={t('chapter_test_locked')}
+              >
+                <Lock className="w-3 h-3" />
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Arrow / Lock */}

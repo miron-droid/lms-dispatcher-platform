@@ -28,7 +28,7 @@ export class TestsService {
   async submit(chapterId: string, userId: string, dto: SubmitTestDto) {
     const chapter = await this.prisma.chapter.findUniqueOrThrow({
       where: { id: chapterId },
-      select: { passThreshold: true },
+      select: { passThreshold: true, courseId: true, order: true },
     });
 
     const questions = await this.prisma.question.findMany({
@@ -50,6 +50,7 @@ export class TestsService {
 
       return {
         questionId: answer.questionId,
+        selectedOptionIds: answer.selectedOptionIds,
         isCorrect,
         explanation: question.explanation,
         correctOptionIds: [...correctIds],
@@ -57,7 +58,8 @@ export class TestsService {
     });
 
     const correctCount = results.filter((r) => r.isCorrect).length;
-    const score = Math.round((correctCount / questions.length) * 100);
+    const totalQuestions = questions.length || 1;
+    const score = Math.round((correctCount / totalQuestions) * 100);
     const passed = score >= chapter.passThreshold;
 
     await this.prisma.testAttempt.create({
@@ -71,68 +73,93 @@ export class TestsService {
     });
 
     if (passed) {
-      await this.prisma.chapterProgress.upsert({
-        where: { userId_chapterId: { userId, chapterId } },
-        update: { testPassed: true },
-        create: { userId, chapterId, testPassed: true, status: ProgressStatus.IN_PROGRESS },
-      });
-
-      // Check if all lessons are also done — if so, complete chapter and unlock next
-      const chapterWithLessons = await this.prisma.chapter.findUnique({
-        where: { id: chapterId },
-        include: {
-          lessons: { where: { status: ContentStatus.PUBLISHED } },
-        },
-      });
-      if (chapterWithLessons) {
-        const allProgress = await this.prisma.lessonProgress.findMany({
-          where: { userId, lessonId: { in: chapterWithLessons.lessons.map((l) => l.id) } },
-        });
-        const allDone = chapterWithLessons.lessons.every((l) =>
-          allProgress.find((p) => p.lessonId === l.id)?.status === ProgressStatus.COMPLETED,
-        );
-        if (allDone) {
-          await this.completeChapterAndUnlockNext(userId, chapterId);
-        }
-      }
+      // Mark current chapter COMPLETED with testPassed=true
+      await this.completeChapterAndUnlockNext(userId, chapterId, chapter.courseId, chapter.order);
     }
 
-    return { score, passed, threshold: chapter.passThreshold, results };
+    return {
+      score,
+      passed,
+      threshold: chapter.passThreshold,
+      totalQuestions,
+      correctAnswers: correctCount,
+      results,
+    };
   }
 
-  private async completeChapterAndUnlockNext(userId: string, chapterId: string) {
+  private async completeChapterAndUnlockNext(
+    userId: string,
+    chapterId: string,
+    courseId: string,
+    order: number,
+  ) {
+    const now = new Date();
+
+    // Mark current chapter completed (test passed)
     await this.prisma.chapterProgress.upsert({
       where: { userId_chapterId: { userId, chapterId } },
-      update: { status: ProgressStatus.COMPLETED, examPassed: true },
-      create: { userId, chapterId, status: ProgressStatus.COMPLETED, testPassed: true, examPassed: true },
+      update: {
+        status: ProgressStatus.COMPLETED,
+        testPassed: true,
+        completedAt: now,
+      },
+      create: {
+        userId,
+        chapterId,
+        status: ProgressStatus.COMPLETED,
+        testPassed: true,
+        examPassed: false,
+        completedAt: now,
+      },
     });
 
-    const currentChapter = await this.prisma.chapter.findUnique({
-      where: { id: chapterId },
-      select: { courseId: true, order: true },
-    });
-    if (!currentChapter) return;
-
+    // Unlock next chapter (if any)
     const nextChapter = await this.prisma.chapter.findFirst({
-      where: { courseId: currentChapter.courseId, order: currentChapter.order + 1, status: ContentStatus.PUBLISHED },
+      where: {
+        courseId,
+        order: order + 1,
+        status: ContentStatus.PUBLISHED,
+      },
       include: {
-        lessons: { where: { status: ContentStatus.PUBLISHED }, orderBy: { order: 'asc' }, take: 1 },
+        lessons: {
+          where: { status: ContentStatus.PUBLISHED },
+          orderBy: { order: 'asc' },
+          take: 1,
+        },
       },
     });
     if (!nextChapter) return;
 
-    await this.prisma.chapterProgress.upsert({
+    // Create a row if missing; otherwise only promote LOCKED → IN_PROGRESS
+    // (never downgrade an already COMPLETED next chapter).
+    const existing = await this.prisma.chapterProgress.findUnique({
       where: { userId_chapterId: { userId, chapterId: nextChapter.id } },
-      update: {},
-      create: { userId, chapterId: nextChapter.id, status: ProgressStatus.IN_PROGRESS },
     });
+    if (!existing) {
+      await this.prisma.chapterProgress.create({
+        data: {
+          userId,
+          chapterId: nextChapter.id,
+          status: ProgressStatus.IN_PROGRESS,
+        },
+      });
+    } else if (existing.status === ProgressStatus.LOCKED) {
+      await this.prisma.chapterProgress.update({
+        where: { userId_chapterId: { userId, chapterId: nextChapter.id } },
+        data: { status: ProgressStatus.IN_PROGRESS },
+      });
+    }
 
     const firstLesson = nextChapter.lessons[0];
     if (firstLesson) {
       await this.prisma.lessonProgress.upsert({
         where: { userId_lessonId: { userId, lessonId: firstLesson.id } },
         update: {},
-        create: { userId, lessonId: firstLesson.id, status: ProgressStatus.IN_PROGRESS },
+        create: {
+          userId,
+          lessonId: firstLesson.id,
+          status: ProgressStatus.IN_PROGRESS,
+        },
       });
     }
   }

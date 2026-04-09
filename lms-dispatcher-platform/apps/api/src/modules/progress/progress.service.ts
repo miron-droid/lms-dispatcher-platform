@@ -24,12 +24,35 @@ export class ProgressService {
       },
     });
 
+    // Pull the user's passing quiz attempts (score >= 80) once — used for
+    // "quizzes passed" counters in the chapter cards.
+    const passingAttempts = await this.prisma.quizAttempt.findMany({
+      where: { userId, score: { gte: 80 } },
+      select: { lessonId: true },
+    });
+    const passedLessonIds = new Set(passingAttempts.map((a) => a.lessonId));
+
+    const lessonHasQuiz = (lesson: { content: unknown }) => {
+      const c = lesson.content as
+        | { type?: string; quiz?: { questions?: unknown[] }; quizRu?: { questions?: unknown[] } }
+        | null
+        | undefined;
+      if (!c || c.type !== 'text') return false;
+      const qs = c.quiz?.questions ?? c.quizRu?.questions;
+      return Array.isArray(qs) && qs.length > 0;
+    };
+
     const chapters = course.chapters.map((ch) => {
       const cp = ch.chapterProgress[0];
       const totalLessons = ch.lessons.length;
       const completedLessons = ch.lessons.filter(
         (l) => l.lessonProgress[0]?.status === ProgressStatus.COMPLETED,
       ).length;
+
+      const quizLessons = ch.lessons.filter((l) => lessonHasQuiz(l));
+      const quizzesTotal = quizLessons.length;
+      const quizzesPassed = quizLessons.filter((l) => passedLessonIds.has(l.id)).length;
+
       return {
         id: ch.id,
         title: ch.title,
@@ -39,15 +62,17 @@ export class ProgressService {
         examPassed: cp?.examPassed ?? false,
         lessonsTotal: totalLessons,
         lessonsCompleted: completedLessons,
+        quizzesTotal,
+        quizzesPassed,
       };
     });
 
     const totalChapters = chapters.length;
-    const completedChapters = chapters.filter((c) => c.status === ProgressStatus.COMPLETED).length;
+    const passedChapters = chapters.filter((c) => c.examPassed).length;
 
     return {
       courseId,
-      overallPercent: totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0,
+      overallPercent: totalChapters > 0 ? Math.round((passedChapters / totalChapters) * 100) : 0,
       chapters,
     };
   }
