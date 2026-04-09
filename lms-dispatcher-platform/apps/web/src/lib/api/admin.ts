@@ -101,11 +101,61 @@ export interface StudentDetail {
   }>;
 }
 
+// ── Analytics types ──
+export interface ActivityDay {
+  date: string;             // ISO date (YYYY-MM-DD)
+  lessonsCompleted: number;
+  quizAttempts: number;
+  activeUsers: number;
+}
+
+export interface HeatmapCell {
+  dayOfWeek: number;        // 0 (Sun) – 6 (Sat)
+  hour: number;             // 0 – 23
+  count: number;
+}
+
+export interface FunnelStage {
+  key: string;              // 'registered' | 'started' | 'chapter1' | 'chapters3plus' | 'chapters9'
+  label: string;
+  count: number;
+  percent: number;          // % of previous stage (0–100)
+}
+
+export interface ChapterDifficulty {
+  chapter: number;          // 1 – 9
+  title: string;
+  avgScore: number;         // 0 – 100
+  passRate: number;         // 0 – 100
+  attempts: number;
+}
+
+export interface QuestionStat {
+  id: string;
+  chapter: number;
+  chapterTitle: string;
+  text: string;
+  attempts: number;
+  correctRate: number;      // 0 – 100
+}
+
 export const adminApi = {
   dashboard: () => apiFetch<DashboardStats>('/admin/dashboard'),
   students: () => apiFetch<StudentAnalytics[]>('/admin/analytics/students'),
   detailed: () => apiFetch<DetailedStudent[]>('/admin/analytics/detailed'),
   getStudentDetails: (userId: string) => apiFetch<StudentDetail>(`/admin/students/${userId}/details`),
+
+  // Analytics
+  getActivity: (days = 30) =>
+    apiFetch<{ days: ActivityDay[] }>(`/admin/analytics/activity?days=${days}`),
+  getHeatmap: () =>
+    apiFetch<{ heatmap: HeatmapCell[]; max: number }>(`/admin/analytics/heatmap`),
+  getFunnel: () =>
+    apiFetch<{ stages: FunnelStage[] }>(`/admin/analytics/funnel`),
+  getChapterDifficulty: () =>
+    apiFetch<{ chapters: ChapterDifficulty[] }>(`/admin/analytics/chapter-difficulty`),
+  getQuestionStats: () =>
+    apiFetch<{ questions: QuestionStat[] }>(`/admin/analytics/question-stats`),
 
   // Manager actions on student progress
   unlockChapter: (userId: string, chapterId: string) =>

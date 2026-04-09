@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, LogOut, Menu, X, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Menu, X, Sun, Moon, BarChart3 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useAuthStore } from '@/lib/stores/auth.store';
@@ -22,6 +22,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
   const NAV = [
     { href: '/manager',       label: lang === 'ru' ? 'Дашборд' : 'Dashboard',  icon: LayoutDashboard, exact: true, badge: 0 },
     { href: '/manager/students', label: lang === 'ru' ? 'Студенты' : 'Students', icon: Users, badge: 0 },
+    { href: '/manager/analytics', label: lang === 'ru' ? 'Аналитика' : 'Analytics', icon: BarChart3, badge: 0 },
   ];
 
   const isActive = (item: typeof NAV[0]) =>

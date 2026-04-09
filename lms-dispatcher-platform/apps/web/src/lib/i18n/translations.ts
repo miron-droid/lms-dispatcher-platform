@@ -179,6 +179,19 @@ export const translations = {
     platform_locked: 'Complete all 9 chapters to unlock',
     platform_progress: 'chapters completed',
     profile_language: 'Language',
+
+    // Analytics
+    analytics_title: 'Analytics',
+    analytics_activity: 'Daily activity (last 30 days)',
+    analytics_heatmap: 'When students study',
+    analytics_funnel: 'Conversion funnel',
+    analytics_chapter_difficulty: 'Chapter difficulty',
+    analytics_question_stats: 'Question stats',
+    analytics_hardest_questions: 'Hardest questions',
+    stat_total_students: 'Total students',
+    stat_active_students: 'Active (7d)',
+    stat_completion_rate: 'Avg completion',
+    stat_avg_score: 'Avg test score',
   },
   ru: {
     // Navigation
@@ -358,6 +371,19 @@ export const translations = {
     platform_locked: 'Пройдите все 9 глав чтобы открыть',
     platform_progress: 'глав пройдено',
     profile_language: 'Язык',
+
+    // Analytics
+    analytics_title: 'Аналитика',
+    analytics_activity: 'Активность (последние 30 дней)',
+    analytics_heatmap: 'Когда студенты учатся',
+    analytics_funnel: 'Воронка прохождения',
+    analytics_chapter_difficulty: 'Сложность глав',
+    analytics_question_stats: 'Статистика вопросов',
+    analytics_hardest_questions: 'Самые сложные вопросы',
+    stat_total_students: 'Всего студентов',
+    stat_active_students: 'Активных (7д)',
+    stat_completion_rate: 'Средний прогресс',
+    stat_avg_score: 'Средний балл',
   },
 } as const;
 

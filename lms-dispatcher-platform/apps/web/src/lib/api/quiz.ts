@@ -1,8 +1,17 @@
 import { apiFetch } from './client';
 
+export interface QuizAnswerEntry {
+  questionId: string;
+  selectedIndex: number;
+}
+
 export interface QuizAttemptInput {
   lessonId: string;
-  answers: number[];
+  // Rich per-question answers. Legacy number[] is still accepted by the
+  // backend for backward compatibility, but new clients should always
+  // send { questionId, selectedIndex }[] so the server can grade each
+  // question and populate analytics.
+  answers: QuizAnswerEntry[] | number[];
   totalQuestions: number;
   correctAnswers: number;
   score: number;
@@ -14,6 +23,12 @@ export interface QuizAttemptResult {
   level: number;
   newAchievements: string[];
   streak: number;
+  // Server-authoritative grading echoed back so the UI can show the
+  // real score instead of its (untrusted) local count.
+  passed?: boolean;
+  score?: number;
+  correctAnswers?: number;
+  totalQuestions?: number;
 }
 
 export interface QuizAttemptRecord {

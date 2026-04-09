@@ -13,7 +13,7 @@ import { NegotiationGame } from '@/components/domain/negotiation-game';
 import { CrisisDashboard } from '@/components/domain/crisis-dashboard';
 import { DispatcherDaySimulator } from '@/components/domain/dispatcher-day-simulator';
 import { BrokerCallSimulator } from '@/components/domain/broker-call-simulator';
-import { quizApi } from '@/lib/api/quiz';
+import { quizApi, type QuizAnswerEntry } from '@/lib/api/quiz';
 import { authApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { useGamificationToast, ACHIEVEMENTS } from '@/lib/stores/gamification.store';
@@ -125,17 +125,26 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-interface PreparedQuestion { text: string; options: string[]; correctIndex: number; originalIndex: number }
+interface PreparedQuestion { id: string; text: string; options: string[]; correctIndex: number; originalIndex: number; optionOriginalIndexes: number[] }
 
 function prepareQuestions(questions: QuizQuestion[]): PreparedQuestion[] {
   const indexedAll = questions.map((q, originalIndex) => ({ q, originalIndex }));
   return shuffle(indexedAll).map(({ q, originalIndex }) => {
-    const indexed = q.options.map((opt, i) => ({ opt, correct: i === q.correctIndex }));
+    // Track each option's original index BEFORE shuffle so we can map
+    // the user's shuffled selection back to the canonical position that
+    // the backend expects for grading.
+    const indexed = q.options.map((opt, i) => ({
+      opt,
+      originalOptionIndex: i,
+      correct: i === q.correctIndex,
+    }));
     const shuffled = shuffle(indexed);
     return {
+      id: q.id,
       text: q.text,
       options: shuffled.map(x => x.opt),
       correctIndex: shuffled.findIndex(x => x.correct),
+      optionOriginalIndexes: shuffled.map(x => x.originalOptionIndex),
       originalIndex,
     };
   });
@@ -159,7 +168,11 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
   const [selected, setSelected]   = useState<number | null>(null);
   const [score, setScore]         = useState(0);
   const [finished, setFinished]   = useState(false);
-  const [answers, setAnswers]     = useState<number[]>([]);
+  const [answers, setAnswers]     = useState<QuizAnswerEntry[]>([]);
+  // Server-authoritative result from POST /quiz-attempts. Because
+  // correctIndex is stripped from GET /lessons/:id for security, we
+  // cannot grade locally — we display what the backend returns.
+  const [serverResult, setServerResult] = useState<{ score: number; correctAnswers: number; totalQuestions: number } | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   // Re-prepare questions when the questions array changes (language switch)
@@ -172,11 +185,19 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
     setAttempt(0);
     setAnswers([]);
     setSubmitted(false);
+    setServerResult(null);
   }, [questions]);
 
   const total   = prepared.length;
   const q       = prepared[current];
-  const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+  // Client-side count is unreliable because correctIndex is stripped
+  // from the lesson payload. Prefer the server-verified result once
+  // the submission round-trip completes.
+  const displayScore   = serverResult?.correctAnswers ?? score;
+  const displayTotal   = serverResult?.totalQuestions ?? total;
+  const displayPercent = serverResult?.score
+    ?? (total > 0 ? Math.round((score / total) * 100) : 0);
+  const percent = displayPercent;
   // Quiz is considered passed only at >= 80% — this matches the lesson page
   // gating and the backend enforcement in lessons.service.ts.
   const passed  = percent >= QUIZ_PASS_THRESHOLD;
@@ -210,6 +231,20 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
           score: percent,
         });
 
+        // Trust the server's grading — it had access to the correct
+        // answers (which are stripped from the client payload).
+        const verifiedScore =
+          typeof res.score === 'number' ? res.score : percent;
+        const verifiedCorrect =
+          typeof res.correctAnswers === 'number' ? res.correctAnswers : score;
+        const verifiedTotal =
+          typeof res.totalQuestions === 'number' ? res.totalQuestions : total;
+        setServerResult({
+          score: verifiedScore,
+          correctAnswers: verifiedCorrect,
+          totalQuestions: verifiedTotal,
+        });
+
         // Invalidate the student's quiz-attempts cache so the lesson page
         // re-evaluates the gate (enables "Mark Complete" if passed).
         qc.invalidateQueries({ queryKey: ['quiz-attempts', 'me'] });
@@ -217,7 +252,7 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
 
         // On pass, nudge the student to the "Mark Complete" button at the
         // bottom of the lesson page so they finish the flow.
-        if (percent >= QUIZ_PASS_THRESHOLD) {
+        if (verifiedScore >= QUIZ_PASS_THRESHOLD) {
           setTimeout(() => {
             const btn = document.querySelector<HTMLElement>('button.btn-primary');
             btn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -257,10 +292,13 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
     if (selected !== null) return;
     if (idx === q.correctIndex) setScore(s => s + 1);
     setSelected(idx);
-    // Record this answer at the original question index for backend
+    // Map the shuffled UI position back to the original option index
+    // that the backend's canonical quiz expects. Without this mapping
+    // the backend would grade every shuffled answer as wrong.
+    const originalSelectedIndex = q.optionOriginalIndexes?.[idx] ?? idx;
     setAnswers(prev => {
-      const next = [...prev];
-      next[q.originalIndex] = idx;
+      const next = prev.filter(a => a.questionId !== q.id);
+      next.push({ questionId: q.id, selectedIndex: originalSelectedIndex });
       return next;
     });
   };
@@ -275,6 +313,7 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
     setFinished(false);
     setAnswers([]);
     setSubmitted(false);
+    setServerResult(null);
   };
 
   // ── Result screen ──
@@ -303,7 +342,7 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
           {percent}%
         </p>
         <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">
-          {score} {t('quiz_out_of')} {total} {t('quiz_correct')}
+          {displayScore} {t('quiz_out_of')} {displayTotal} {t('quiz_correct')}
         </p>
 
         {passed ? (

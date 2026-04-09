@@ -484,7 +484,7 @@ const STATES: StateData[] = [
 const MARKET_CFG = {
   hot:     { en: 'Hot Market',     ru: 'Горячий рынок',   cardEn: 'Hot',     cardRu: 'Горячий',  color: 'bg-red-100 text-red-700 border-red-200',      dot: 'bg-red-500'    },
   warm:    { en: 'Warm Market',    ru: 'Тёплый рынок',    cardEn: 'Warm',    cardRu: 'Тёплый',   color: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-400'  },
-  neutral: { en: 'Neutral Market', ru: 'Нейтральный',     cardEn: 'Neutral', cardRu: 'Нейтр.',   color: 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)]',    dot: 'bg-gray-400'   },
+  neutral: { en: 'Neutral Market', ru: 'Нейтральный',     cardEn: 'Neutral', cardRu: 'Нейтр.',   color: 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08]',    dot: 'bg-gray-400'   },
   cold:    { en: 'Cold Market',    ru: 'Холодный рынок',  cardEn: 'Cold',    cardRu: 'Холодный', color: 'bg-blue-100 text-blue-700 border-blue-200',    dot: 'bg-blue-500'   },
 };
 
@@ -528,7 +528,7 @@ export function StateFreightDictionary() {
   const selectedState = STATES.find(s => s.abbr === selected);
 
   return (
-    <div className="mt-8 mb-4 rounded-2xl border border-gray-100 dark:border-[rgba(255,255,255,0.06)] bg-white dark:bg-[#2c2c2e] shadow-sm overflow-hidden">
+    <div className="mt-8 mb-4 rounded-2xl border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-[#2c2c2e] shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-4 lg:px-6">
         <div className="flex items-center gap-3 mb-1">
@@ -545,7 +545,7 @@ export function StateFreightDictionary() {
       </div>
 
       {/* Filters */}
-      <div className="px-4 py-4 lg:px-6 border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)] space-y-3">
+      <div className="px-4 py-4 lg:px-6 border-b border-gray-100 dark:border-white/[0.06] space-y-3">
         {/* Search */}
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] text-sm">🔍</span>
@@ -554,10 +554,10 @@ export function StateFreightDictionary() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={ru ? 'Поиск по штату или грузу...' : 'Search state or freight...'}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 bg-gray-50 dark:bg-[#1c1c1e] text-gray-800 dark:text-[#f5f5f7] placeholder-gray-400"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/[0.08] text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 bg-gray-50 dark:bg-[#1c1c1e] text-gray-800 dark:text-[#f5f5f7] placeholder-gray-400"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7] text-xs">✕</button>
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:text-[#a1a1a6] text-xs">✕</button>
           )}
         </div>
 
@@ -566,7 +566,7 @@ export function StateFreightDictionary() {
           <button
             onClick={() => setRegion('All')}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-              region === 'All' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-slate-400'
+              region === 'All' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-slate-400'
             )}
           >
             {ru ? '🌎 Все регионы' : '🌎 All Regions'}
@@ -576,7 +576,7 @@ export function StateFreightDictionary() {
               key={r}
               onClick={() => setRegion(r)}
               className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                region === r ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-slate-400'
+                region === r ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-slate-400'
               )}
             >
               {REGION_CFG[r].emoji} {ru ? REGION_CFG[r].ru : REGION_CFG[r].en}
@@ -589,7 +589,7 @@ export function StateFreightDictionary() {
           <button
             onClick={() => setMarket('All')}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-              market === 'All' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-slate-400'
+              market === 'All' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-slate-400'
             )}
           >
             {ru ? 'Все рынки' : 'All Markets'}
@@ -599,7 +599,7 @@ export function StateFreightDictionary() {
               key={m}
               onClick={() => setMarket(m)}
               className={cn('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                market === m ? MARKET_CFG[m].color + ' font-bold' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-gray-400 dark:hover:border-[#636366]'
+                market === m ? MARKET_CFG[m].color + ' font-bold' : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-gray-400'
               )}
             >
               <span className={cn('inline-block w-2 h-2 rounded-full mr-1.5', MARKET_CFG[m].dot)} />
@@ -634,12 +634,12 @@ export function StateFreightDictionary() {
             </div>
             <button
               onClick={() => setSelected(null)}
-              className="text-gray-400 dark:text-[#636366] hover:text-gray-700 dark:hover:text-[#f5f5f7] text-xl font-bold shrink-0"
+              className="text-gray-400 dark:text-[#636366] hover:text-gray-700 dark:text-[#f5f5f7] text-xl font-bold shrink-0"
             >✕</button>
           </div>
 
           {/* RPM highlight */}
-          <div className="bg-white dark:bg-[#2c2c2e] rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] px-4 py-3 mb-4 flex items-center gap-4">
+          <div className="bg-white dark:bg-[#2c2c2e] rounded-xl border border-gray-200 dark:border-white/[0.08] px-4 py-3 mb-4 flex items-center gap-4">
             <div>
               <p className="text-xs text-gray-500 dark:text-[#a1a1a6] mb-0.5">{ru ? 'Диапазон RPM (2026)' : 'RPM Range (2026)'}</p>
               <p className="text-2xl font-black text-slate-800">
@@ -664,7 +664,7 @@ export function StateFreightDictionary() {
             </p>
             <div className="flex flex-wrap gap-2">
               {(ru ? selectedState.freightRu : selectedState.freight).map((f, i) => (
-                <span key={i} className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-[rgba(255,255,255,0.08)] text-xs text-gray-700 dark:text-[#a1a1a6] font-medium">
+                <span key={i} className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-white/[0.08] text-xs text-gray-700 dark:text-[#f5f5f7] font-medium">
                   📦 {f}
                 </span>
               ))}
@@ -717,7 +717,7 @@ export function StateFreightDictionary() {
                     'text-left rounded-xl border p-3 transition-all hover:shadow-md active:scale-95',
                     isSelected
                       ? 'border-slate-500 bg-slate-50 shadow-md ring-2 ring-slate-300'
-                      : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e] hover:border-slate-300'
+                      : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#2c2c2e] hover:border-slate-300'
                   )}
                 >
                   <div className="flex items-center justify-between mb-1.5">
@@ -744,7 +744,7 @@ export function StateFreightDictionary() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-100 dark:border-[rgba(255,255,255,0.06)] px-4 py-3 lg:px-6 bg-gray-50 dark:bg-[#1c1c1e]">
+      <div className="border-t border-gray-100 dark:border-white/[0.06] px-4 py-3 lg:px-6 bg-gray-50 dark:bg-[#1c1c1e]">
         <p className="text-xs text-gray-400 dark:text-[#636366] text-center">
           {ru
             ? '📊 Данные по ставкам актуальны для рынка грузовых перевозок США 2026 года. RPM = rate per mile (ставка за милю). Реальные ставки могут варьироваться в зависимости от сезона и спроса.'

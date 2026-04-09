@@ -126,7 +126,7 @@ export class AdminService {
         };
       });
 
-      const completedChapters = chapters.filter(c => c.examPassed).length;
+      const completedChapters = chapters.filter(c => c.status === "COMPLETED" || c.testPassed || c.examPassed).length;
       const scores = s.testAttempts.map(t => t.score);
       const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
       const totalLessons = s.lessonProgress.filter(l => l.status === 'COMPLETED').length;

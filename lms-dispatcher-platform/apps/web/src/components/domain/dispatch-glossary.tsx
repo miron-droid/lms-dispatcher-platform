@@ -2,9 +2,10 @@
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/lib/i18n/lang-context';
+import { USFreightMap } from '@/components/domain/us-freight-map';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
-type SectionId = 'abbr' | 'broker' | 'driver' | 'docs' | 'rates' | 'equipment';
+type SectionId = 'abbr' | 'broker' | 'driver' | 'docs' | 'rates' | 'equipment' | 'states';
 
 interface GlossaryTerm {
   term: string;
@@ -24,6 +25,7 @@ const SECTIONS: { id: SectionId; emoji: string; en: string; ru: string }[] = [
   { id: 'docs',      emoji: '📄', en: 'Documents',       ru: 'Документы'           },
   { id: 'rates',     emoji: '💰', en: 'Rates & Finance', ru: 'Ставки и финансы'    },
   { id: 'equipment', emoji: '🔧', en: 'Equipment',       ru: 'Оборудование'        },
+  { id: 'states',    emoji: '🗺️', en: 'US States',       ru: 'Штаты США'           },
 ];
 
 /* ── Glossary Data ──────────────────────────────────────────────────────────── */
@@ -398,9 +400,9 @@ const TERMS: GlossaryTerm[] = [
     definitionRu: 'Сумма, которую получает перевозчик после вычета комиссии брокера. Грузоотправители платят брокерам больше, чем видят перевозчики.',
   },
   {
-    term: 'Load Board Rate', section: 'rates',
-    definition: 'Market rate data from load board platforms (e.g. Truckstop.com) showing current average rates for specific lanes.',
-    definitionRu: 'Данные о рыночных ставках с платформ Load Board (например, Truckstop.com) — текущие средние ставки для конкретных маршрутов.',
+    term: 'DAT / Load Board rate', section: 'rates',
+    definition: 'Market rate data from load board platforms (DAT, Truckstop.com) showing current average rates for specific lanes.',
+    definitionRu: 'Данные о рыночных ставках с платформ Load Board (DAT, Truckstop.com) — текущие средние ставки для конкретных маршрутов.',
   },
   {
     term: 'Layover pay', section: 'rates',
@@ -464,6 +466,59 @@ const TERMS: GlossaryTerm[] = [
     definition: 'Smaller truck (pickup or medium-duty) with a flatbed trailer. Used for expedited, smaller loads. Faster but more expensive per mile.',
     definitionRu: 'Малотоннажный грузовик с флэтбедом. Для срочных небольших грузов. Быстрее, но дороже за милю.',
   },
+
+  // ── US STATES ────────────────────────────────────────────────────────────────
+  { term: 'AL', section: 'states', definition: 'Alabama', definitionRu: 'Алабама' },
+  { term: 'AK', section: 'states', definition: 'Alaska', definitionRu: 'Аляска' },
+  { term: 'AZ', section: 'states', definition: 'Arizona', definitionRu: 'Аризона' },
+  { term: 'AR', section: 'states', definition: 'Arkansas', definitionRu: 'Арканзас' },
+  { term: 'CA', section: 'states', definition: 'California', definitionRu: 'Калифорния' },
+  { term: 'CO', section: 'states', definition: 'Colorado', definitionRu: 'Колорадо' },
+  { term: 'CT', section: 'states', definition: 'Connecticut', definitionRu: 'Коннектикут' },
+  { term: 'DE', section: 'states', definition: 'Delaware', definitionRu: 'Делавэр' },
+  { term: 'FL', section: 'states', definition: 'Florida', definitionRu: 'Флорида' },
+  { term: 'GA', section: 'states', definition: 'Georgia', definitionRu: 'Джорджия' },
+  { term: 'HI', section: 'states', definition: 'Hawaii', definitionRu: 'Гавайи' },
+  { term: 'ID', section: 'states', definition: 'Idaho', definitionRu: 'Айдахо' },
+  { term: 'IL', section: 'states', definition: 'Illinois', definitionRu: 'Иллинойс' },
+  { term: 'IN', section: 'states', definition: 'Indiana', definitionRu: 'Индиана' },
+  { term: 'IA', section: 'states', definition: 'Iowa', definitionRu: 'Айова' },
+  { term: 'KS', section: 'states', definition: 'Kansas', definitionRu: 'Канзас' },
+  { term: 'KY', section: 'states', definition: 'Kentucky', definitionRu: 'Кентукки' },
+  { term: 'LA', section: 'states', definition: 'Louisiana', definitionRu: 'Луизиана' },
+  { term: 'ME', section: 'states', definition: 'Maine', definitionRu: 'Мэн' },
+  { term: 'MD', section: 'states', definition: 'Maryland', definitionRu: 'Мэриленд' },
+  { term: 'MA', section: 'states', definition: 'Massachusetts', definitionRu: 'Массачусетс' },
+  { term: 'MI', section: 'states', definition: 'Michigan', definitionRu: 'Мичиган' },
+  { term: 'MN', section: 'states', definition: 'Minnesota', definitionRu: 'Миннесота' },
+  { term: 'MS', section: 'states', definition: 'Mississippi', definitionRu: 'Миссисипи' },
+  { term: 'MO', section: 'states', definition: 'Missouri', definitionRu: 'Миссури' },
+  { term: 'MT', section: 'states', definition: 'Montana', definitionRu: 'Монтана' },
+  { term: 'NE', section: 'states', definition: 'Nebraska', definitionRu: 'Небраска' },
+  { term: 'NV', section: 'states', definition: 'Nevada', definitionRu: 'Невада' },
+  { term: 'NH', section: 'states', definition: 'New Hampshire', definitionRu: 'Нью-Гэмпшир' },
+  { term: 'NJ', section: 'states', definition: 'New Jersey', definitionRu: 'Нью-Джерси' },
+  { term: 'NM', section: 'states', definition: 'New Mexico', definitionRu: 'Нью-Мексико' },
+  { term: 'NY', section: 'states', definition: 'New York', definitionRu: 'Нью-Йорк' },
+  { term: 'NC', section: 'states', definition: 'North Carolina', definitionRu: 'Северная Каролина' },
+  { term: 'ND', section: 'states', definition: 'North Dakota', definitionRu: 'Северная Дакота' },
+  { term: 'OH', section: 'states', definition: 'Ohio', definitionRu: 'Огайо' },
+  { term: 'OK', section: 'states', definition: 'Oklahoma', definitionRu: 'Оклахома' },
+  { term: 'OR', section: 'states', definition: 'Oregon', definitionRu: 'Орегон' },
+  { term: 'PA', section: 'states', definition: 'Pennsylvania', definitionRu: 'Пенсильвания' },
+  { term: 'RI', section: 'states', definition: 'Rhode Island', definitionRu: 'Род-Айленд' },
+  { term: 'SC', section: 'states', definition: 'South Carolina', definitionRu: 'Южная Каролина' },
+  { term: 'SD', section: 'states', definition: 'South Dakota', definitionRu: 'Южная Дакота' },
+  { term: 'TN', section: 'states', definition: 'Tennessee', definitionRu: 'Теннесси' },
+  { term: 'TX', section: 'states', definition: 'Texas', definitionRu: 'Техас' },
+  { term: 'UT', section: 'states', definition: 'Utah', definitionRu: 'Юта' },
+  { term: 'VT', section: 'states', definition: 'Vermont', definitionRu: 'Вермонт' },
+  { term: 'VA', section: 'states', definition: 'Virginia', definitionRu: 'Вирджиния' },
+  { term: 'WA', section: 'states', definition: 'Washington', definitionRu: 'Вашингтон' },
+  { term: 'WV', section: 'states', definition: 'West Virginia', definitionRu: 'Западная Вирджиния' },
+  { term: 'WI', section: 'states', definition: 'Wisconsin', definitionRu: 'Висконсин' },
+  { term: 'WY', section: 'states', definition: 'Wyoming', definitionRu: 'Вайоминг' },
+  { term: 'DC', section: 'states', definition: 'District of Columbia', definitionRu: 'Округ Колумбия' },
 ];
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
@@ -473,7 +528,7 @@ export function DispatchGlossary() {
 
   const [activeSection, setActiveSection] = useState<SectionId | 'all'>('all');
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [hoveredState, setHoveredState] = useState<string | undefined>(undefined);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -503,7 +558,7 @@ export function DispatchGlossary() {
     return g;
   }, [filtered, activeSection]);
 
-  const sectionOrder: SectionId[] = ['abbr', 'broker', 'driver', 'docs', 'rates', 'equipment'];
+  const sectionOrder: SectionId[] = ['abbr', 'broker', 'driver', 'docs', 'rates', 'equipment', 'states'];
 
   return (
     <div>
@@ -527,12 +582,12 @@ export function DispatchGlossary() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={ru ? 'Поиск по термину...' : 'Search terms...'}
-          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 bg-gray-50 dark:bg-[#1c1c1e] text-gray-800 dark:text-[#f5f5f7] placeholder-gray-400"
+          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-white/[0.08] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 bg-gray-50 dark:bg-[#1c1c1e] text-gray-800 dark:text-[#f5f5f7] placeholder-gray-400"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7] text-xs"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:text-[#a1a1a6] text-xs"
           >✕</button>
         )}
       </div>
@@ -545,7 +600,7 @@ export function DispatchGlossary() {
             'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
             activeSection === 'all'
               ? 'bg-gray-900 text-white border-gray-900'
-              : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-gray-400 dark:hover:border-[#636366]'
+              : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-gray-400'
           )}
         >
           {ru ? 'Все разделы' : 'All'}
@@ -561,7 +616,7 @@ export function DispatchGlossary() {
                 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
                 activeSection === s.id
                   ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-gray-400 dark:hover:border-[#636366]'
+                  : 'bg-white dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] border-gray-200 dark:border-white/[0.08] hover:border-gray-400'
               )}
             >
               {s.emoji} {ru ? s.ru : s.en}
@@ -591,68 +646,78 @@ export function DispatchGlossary() {
               {activeSection === 'all' && (
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">{sectionCfg.emoji}</span>
-                  <h2 className="text-sm font-bold text-gray-700 dark:text-[#a1a1a6] uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-gray-700 dark:text-[#f5f5f7] uppercase tracking-wider">
                     {ru ? sectionCfg.ru : sectionCfg.en}
                   </h2>
                   <div className="flex-1 h-px bg-gray-100 dark:bg-[#2c2c2e]" />
                 </div>
               )}
 
-              <div className="space-y-2">
-                {terms.map(term => {
-                  const key = `${sectionId}-${term.term}`;
-                  const isOpen = expanded === key;
-                  const definition = ru ? term.definitionRu : term.definition;
-                  const example = ru ? term.exampleRu : term.example;
+              {sectionId === 'states' ? (
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {/* Map — фиксированная левая колонка */}
+                  <div className="w-full lg:w-[70%] shrink-0">
+                    <USFreightMap hoveredState={hoveredState} labelSize={9} />
+                  </div>
 
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setExpanded(isOpen ? null : key)}
-                      className={cn(
-                        'w-full text-left rounded-xl border transition-all duration-200',
-                        isOpen
-                          ? 'border-emerald-300 bg-emerald-50'
-                          : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e] hover:border-gray-300 dark:hover:border-[#636366] hover:bg-gray-50 dark:hover:bg-[#2c2c2e]'
-                      )}
-                    >
-                      <div className="flex items-center justify-between px-4 py-3 gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={cn(
-                            'text-sm font-bold shrink-0',
-                            isOpen ? 'text-emerald-700' : 'text-gray-900 dark:text-[#f5f5f7]'
-                          )}>
+                  {/* State list — независимо скроллируемая правая колонка */}
+                  <div className="w-full lg:w-[30%] lg:max-h-[600px] lg:overflow-y-auto lg:pr-1">
+                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                      {terms.map(term => (
+                        <div
+                          key={term.term}
+                          onMouseEnter={() => setHoveredState(term.term)}
+                          onMouseLeave={() => setHoveredState(undefined)}
+                          className={`flex items-center gap-2.5 border rounded-xl px-3 py-2.5 cursor-default transition-colors ${
+                            hoveredState === term.term
+                              ? 'border-emerald-400 bg-emerald-50 shadow-sm'
+                              : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#2c2c2e] hover:border-emerald-300 hover:bg-emerald-50'
+                          }`}
+                        >
+                          <span className={`text-sm font-bold shrink-0 w-8 ${hoveredState === term.term ? 'text-emerald-600' : 'text-emerald-700'}`}>
                             {term.term}
                           </span>
-                          {!isOpen && (
-                            <span className="text-xs text-gray-400 dark:text-[#636366] truncate hidden sm:block">
-                              — {definition.slice(0, 60)}{definition.length > 60 ? '…' : ''}
-                            </span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-800 dark:text-[#f5f5f7] truncate">{term.definition}</p>
+                            <p className="text-[10px] text-gray-400 dark:text-[#636366] truncate">{term.definitionRu}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {terms.map(term => {
+                    const definition = ru ? term.definitionRu : term.definition;
+                    const example = ru ? term.exampleRu : term.example;
+                    return (
+                      <div
+                        key={`${sectionId}-${term.term}`}
+                        className="bg-white dark:bg-[#2c2c2e] border border-gray-200 dark:border-white/[0.08] rounded-xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start gap-3 mb-2">
+                          <span className="inline-block bg-emerald-50 text-emerald-700 text-sm font-bold px-2.5 py-0.5 rounded-lg border border-emerald-200 shrink-0">
+                            {term.term}
+                          </span>
+                          {term.termRu && (
+                            <span className="text-xs text-gray-400 dark:text-[#636366] mt-1">{term.termRu}</span>
                           )}
                         </div>
-                        <span className={cn(
-                          'text-gray-300 dark:text-[#636366] text-sm shrink-0 transition-transform duration-200',
-                          isOpen && 'rotate-180'
-                        )}>▾</span>
+                        <p className="text-sm text-gray-700 dark:text-[#f5f5f7] leading-relaxed">{definition}</p>
+                        {example && (
+                          <div className="mt-2.5 bg-gray-50 dark:bg-[#1c1c1e] border border-gray-100 dark:border-white/[0.06] rounded-lg px-3 py-2">
+                            <p className="text-[10px] font-semibold text-gray-400 dark:text-[#636366] uppercase tracking-wide mb-1">
+                              {ru ? 'Пример' : 'Example'}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-[#a1a1a6] italic">{example}</p>
+                          </div>
+                        )}
                       </div>
-
-                      {isOpen && (
-                        <div className="px-4 pb-4 space-y-2.5" onClick={e => e.stopPropagation()}>
-                          <p className="text-sm text-gray-700 dark:text-[#a1a1a6] leading-relaxed">{definition}</p>
-                          {example && (
-                            <div className="bg-white dark:bg-[#2c2c2e] border border-emerald-200 rounded-lg px-3 py-2">
-                              <p className="text-[11px] font-semibold text-emerald-600 mb-0.5">
-                                {ru ? '💬 Пример' : '💬 Example'}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-[#a1a1a6] italic">{example}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}

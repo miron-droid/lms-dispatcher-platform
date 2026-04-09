@@ -27,7 +27,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseTransformInterceptor());
 
   const port = process.env.PORT ?? 3001;
-  await app.listen(port);
+  app.getHttpAdapter().getInstance().disable("x-powered-by");
+
+  await app.listen(port, '127.0.0.1');
   console.log(`🚀 API running on http://localhost:${port}/api/v1`);
 }
 

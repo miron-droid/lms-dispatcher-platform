@@ -53,7 +53,7 @@ export default function StudentsPage() {
             <Link
               key={s.id}
               href={`/manager/students/${s.id}`}
-              className="card flex items-center gap-4 group cursor-pointer hover:border-gray-300 dark:hover:border-white/[0.16] hover:bg-gray-50/50 dark:hover:bg-[#2c2c2e]/50 transition-colors"
+              className="card flex items-center gap-4 group cursor-pointer hover:border-gray-300 dark:border-white/[0.12] dark:hover:border-white/[0.16] hover:bg-gray-50/50 dark:hover:bg-[#2c2c2e]/50 transition-colors"
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -86,14 +86,14 @@ export default function StudentsPage() {
               {/* Settings button */}
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSettingsFor(s); }}
-                className="p-2 text-gray-300 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7] hover:bg-gray-100 dark:hover:bg-[#3a3a3c] rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 lg:opacity-100"
+                className="p-2 text-gray-300 dark:text-[#636366] hover:text-gray-600 dark:text-[#a1a1a6] dark:hover:text-[#f5f5f7] hover:bg-gray-100 dark:hover:bg-white/10 dark:bg-[#2c2c2e] dark:hover:bg-[#3a3a3c] rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 lg:opacity-100"
                 title={lang === 'ru' ? 'Настройки' : 'Settings'}
               >
                 <Settings className="w-4 h-4" />
               </button>
 
               {/* Chevron */}
-              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-[#636366] group-hover:text-gray-500 dark:group-hover:text-[#a1a1a6] transition-colors flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-[#636366] group-hover:text-gray-500 dark:text-[#a1a1a6] dark:group-hover:text-[#a1a1a6] transition-colors flex-shrink-0" />
             </Link>
           );
         })}
@@ -226,7 +226,7 @@ function StudentSettingsModal({ student, onClose }: { student: StudentAnalytics;
 
         <div className="space-y-4">
           {/* Change Password */}
-          <div className="border border-gray-200 dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4">
+          <div className="border border-gray-200 dark:border-white/[0.08] dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Key className="w-4 h-4 text-gray-400 dark:text-[#636366]" />
               <h3 className="text-sm font-semibold text-gray-900 dark:text-[#f5f5f7]">{lang === 'ru' ? 'Сменить пароль' : 'Change Password'}</h3>
@@ -265,7 +265,7 @@ function StudentSettingsModal({ student, onClose }: { student: StudentAnalytics;
                 <button onClick={() => resetProgress.mutate()} disabled={resetProgress.isPending} className="flex-1 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-amber-600 transition-colors">
                   {resetProgress.isPending ? '...' : (lang === 'ru' ? 'Да, сбросить' : 'Yes, Reset')}
                 </button>
-                <button onClick={() => setConfirm(null)} className="px-4 py-2 bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3a3a3c] transition-colors">
+                <button onClick={() => setConfirm(null)} className="px-4 py-2 bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 dark:bg-[#3a3a3c] dark:hover:bg-[#3a3a3c] transition-colors">
                   {lang === 'ru' ? 'Отмена' : 'Cancel'}
                 </button>
               </div>
@@ -292,7 +292,7 @@ function StudentSettingsModal({ student, onClose }: { student: StudentAnalytics;
                 <button onClick={() => deactivateUser.mutate()} disabled={deactivateUser.isPending} className="flex-1 px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-red-600 transition-colors">
                   {deactivateUser.isPending ? '...' : (lang === 'ru' ? 'Да, удалить' : 'Yes, Delete')}
                 </button>
-                <button onClick={() => setConfirm(null)} className="px-4 py-2 bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3a3a3c] transition-colors">
+                <button onClick={() => setConfirm(null)} className="px-4 py-2 bg-gray-100 dark:bg-[#2c2c2e] text-gray-600 dark:text-[#a1a1a6] text-sm font-medium rounded-xl cursor-pointer hover:bg-gray-200 dark:bg-[#3a3a3c] dark:hover:bg-[#3a3a3c] transition-colors">
                   {lang === 'ru' ? 'Отмена' : 'Cancel'}
                 </button>
               </div>
