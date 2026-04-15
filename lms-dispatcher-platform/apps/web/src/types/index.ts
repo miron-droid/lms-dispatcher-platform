@@ -1,4 +1,4 @@
-export type UserRole = 'STUDENT' | 'MANAGER' | 'ADMIN';
+export type UserRole = 'STUDENT' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
 export type ProgressStatus = 'LOCKED' | 'IN_PROGRESS' | 'COMPLETED';
 export type ExamDecision = 'PASS' | 'RETRY' | 'DISBAND';
 export type ExamStatus = 'REQUESTED' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
@@ -11,6 +11,9 @@ export interface User {
   lastName: string;
   role: UserRole;
   managerId?: string;
+  companyId?: string;
+  companySlug?: string;
+  companyName?: string;
   totalXP?: number;
   streak?: number;
   level?: number;
@@ -33,7 +36,7 @@ export interface Lesson {
   lessonProgress?: { status: ProgressStatus }[];
 }
 
-export interface QuizQuestion   { id: string; text: string; options: string[]; correctIndex: number }
+export interface QuizQuestion   { id: string; text: string; options: string[]; correctIndex: number; explanation?: string }
 export interface TextContent    { type: 'text'; body: string; bodyRu?: string; quiz?: { questions: QuizQuestion[] }; quizRu?: { questions: QuizQuestion[] }; simulation?: boolean; freightMap?: boolean; equipmentMatcher?: boolean; phoneCall?: boolean; driverChat?: boolean; loadBoard?: boolean; negotiationGame?: boolean; crisisDashboard?: boolean; brokerCall?: boolean; dispatcherDay?: boolean }
 export interface VideoContent   { type: 'video'; hlsUrl: string; posterUrl?: string }
 export interface DialogueContent { type: 'dialogue'; messages: { role: 'broker' | 'dispatcher' | 'driver'; text: string }[] }

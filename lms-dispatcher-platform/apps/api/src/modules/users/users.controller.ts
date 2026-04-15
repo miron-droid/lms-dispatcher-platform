@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/types/authenticated-request.type';
@@ -12,14 +13,14 @@ export class UsersController {
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  create(@Body() dto: CreateUserDto) {
-    return this.users.create(dto);
+  create(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
+    return this.users.create(dto, user.role as UserRole, user.sub, user.companyId);
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  findAll(@Query('role') role?: UserRole) {
-    return this.users.findAll(role);
+  findAll(@Query('role') role: UserRole | undefined, @CurrentUser() user: JwtPayload) {
+    return this.users.findAll(role, user.role as UserRole, user.sub, user.companyId);
   }
 
   @Get('my-students')
@@ -30,25 +31,29 @@ export class UsersController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  findOne(@Param('id') id: string) {
-    return this.users.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.users.findOne(id, user.role as UserRole, user.sub);
   }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  deactivate(@Param('id') id: string) {
-    return this.users.deactivate(id);
+  deactivate(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.users.deactivate(id, user.role as UserRole, user.sub);
   }
 
   @Patch(':id/password')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  resetPassword(@Param('id') id: string, @Body('password') password: string) {
-    return this.users.resetPassword(id, password);
+  resetPassword(
+    @Param('id') id: string,
+    @Body() dto: ResetPasswordDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.users.resetPassword(id, dto.password, user.role as UserRole, user.sub);
   }
 
   @Post(':id/reset-progress')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  resetProgress(@Param('id') id: string) {
-    return this.users.resetProgress(id);
+  resetProgress(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.users.resetProgress(id, user.role as UserRole, user.sub);
   }
 }

@@ -2,6 +2,7 @@ export enum UserRole {
   STUDENT = 'STUDENT',
   MANAGER = 'MANAGER',
   ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
 }
 
 export enum ContentStatus {

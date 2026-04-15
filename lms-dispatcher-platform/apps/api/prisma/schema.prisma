@@ -13,6 +13,7 @@ enum UserRole {
   STUDENT
   MANAGER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum ContentStatus {
@@ -48,6 +49,22 @@ enum ExamStatus {
   CANCELLED
 }
 
+// ── Company (multi-tenancy) ───────────────────────────────────────────────────
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  slug        String   @unique @db.VarChar(50)
+  logoUrl     String?  @db.VarChar(500)
+  isActive    Boolean  @default(true)
+  maxStudents Int      @default(100)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+
 // ── User ──────────────────────────────────────────────────────────────────────
 
 model User {
@@ -59,6 +76,9 @@ model User {
   role         UserRole  @default(STUDENT)
   isActive     Boolean   @default(true)
   lastActiveAt DateTime?
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
   managerId String?
   manager   User?   @relation("ManagerStudents", fields: [managerId], references: [id])
@@ -72,6 +92,7 @@ model User {
   dailyExams       DailyExam[]
   pushSubscriptions PushSubscription[]
   quizAttempts     QuizAttempt[]
+  certificates     Certificate[]
 
   totalXP        Int       @default(0)
   streak         Int       @default(0)
@@ -84,6 +105,7 @@ model User {
   @@index([email])
   @@index([role])
   @@index([managerId])
+  @@index([companyId])
 }
 
 // ── Course & structure ────────────────────────────────────────────────────────
@@ -297,4 +319,38 @@ model QuizAttempt {
   completedAt     DateTime @default(now())
 
   @@index([userId, lessonId])
+}
+
+
+// ── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String
+  actorEmail  String
+  actorRole   String
+  action      String
+  targetType  String?
+  targetId    String?
+  targetEmail String?
+  details     Json     @default("{}")
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([actorId])
+}
+
+model Certificate {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  certNumber  String   @unique
+  studentName String
+  companyName String?
+  issuedAt    DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
 }

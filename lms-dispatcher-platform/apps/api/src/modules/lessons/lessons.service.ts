@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProgressStatus, ContentStatus } from '@prisma/client';
 import { awardXPAndUpdateStreak, xpForLessonType } from '../quiz-attempts/gamification';
@@ -31,7 +31,7 @@ function stripQuizAnswers<T extends { content: unknown }>(lesson: T): T {
   function sanitizeQuiz(quiz: any) {
     if (!quiz || !Array.isArray(quiz.questions)) return;
     quiz.questions = quiz.questions.map((q: any) => {
-      const { correctIndex, correct, isCorrect, ...rest } = q || {};
+      const { correctIndex, correct, isCorrect, explanation, ...rest } = q || {};
       // Also strip any per-option correct flags
       if (Array.isArray(rest.options)) {
         rest.options = rest.options.map((opt: any) => {
@@ -47,6 +47,11 @@ function stripQuizAnswers<T extends { content: unknown }>(lesson: T): T {
   if (clean.quiz) sanitizeQuiz(clean.quiz);
   if (clean.quizRu) sanitizeQuiz(clean.quizRu);
 
+  // Strip correctIndex from CaseContent (type: 'case')
+  if (clean.type === 'case' && 'correctIndex' in clean) {
+    delete clean.correctIndex;
+  }
+
   return { ...lesson, content: clean } as T;
 }
 
@@ -57,8 +62,26 @@ export class LessonsService {
   async findOne(lessonId: string, userId: string) {
     const lesson = await this.prisma.lesson.findUniqueOrThrow({
       where: { id: lessonId, status: ContentStatus.PUBLISHED },
-      include: { chapter: { select: { id: true, title: true } } },
+      include: { chapter: { select: { id: true, title: true, order: true } } },
     });
+
+    // Check if chapter is locked for this student (order > 1 means it
+    // could be locked). Chapter 1 is always open.
+    if (lesson.chapter.order > 1) {
+      const chapterProgress = await this.prisma.chapterProgress.findUnique({
+        where: { userId_chapterId: { userId, chapterId: lesson.chapter.id } },
+      });
+      if (!chapterProgress || chapterProgress.status === ProgressStatus.LOCKED) {
+        // Check if the user is ADMIN/MANAGER — they can view all content
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true },
+        });
+        if (user?.role === 'STUDENT') {
+          throw new ForbiddenException('CHAPTER_LOCKED');
+        }
+      }
+    }
 
     const progress = await this.prisma.lessonProgress.findUnique({
       where: { userId_lessonId: { userId, lessonId } },
@@ -193,6 +216,42 @@ export class LessonsService {
           completedAt: new Date(),
         },
       });
+
+      // Auto-generate certificate if all 9 chapters completed
+      try {
+        const completedChapters = await this.prisma.chapterProgress.count({
+          where: { userId, status: ProgressStatus.COMPLETED },
+        });
+        if (completedChapters >= 9) {
+          const existingCert = await this.prisma.certificate.findUnique({
+            where: { userId_courseId: { userId, courseId: 'course-dispatchers-v1' } },
+          });
+          if (!existingCert) {
+            const certUser = await this.prisma.user.findUnique({
+              where: { id: userId },
+              include: { company: { select: { name: true } } },
+            });
+            if (certUser) {
+              const year = new Date().getFullYear();
+              const count = await this.prisma.certificate.count();
+              const certNumber = `DG-${year}-${String(count + 1).padStart(5, '0')}`;
+              await this.prisma.certificate.create({
+                data: {
+                  userId,
+                  courseId: 'course-dispatchers-v1',
+                  certNumber,
+                  studentName: `${certUser.firstName} ${certUser.lastName}`.trim(),
+                  companyName: certUser.company?.name ?? null,
+                },
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Certificate auto-generation failed', e);
+      }
+
+
 
       // Find next chapter by order and unlock its first lesson
       const currentChapter = await this.prisma.chapter.findUnique({

@@ -284,8 +284,11 @@ function getContent(chapter: number, lesson: number): object {
           <strong>Key principle:</strong> No participant works in isolation. If the driver is late — the broker suffers. If the broker gives wrong info — the carrier suffers. If the dispatcher plans poorly — everyone loses money.
         </blockquote>
 
-        <h2>Shipper — The Origin of Everything</h2>
-        <p>The <strong>shipper</strong> is any business with goods requiring transportation (factories, warehouses, e-commerce giants like Amazon/Walmart). The shipper creates a load specifying cargo type, weight, pickup/delivery locations, and <strong>appointment windows</strong>. They hand the load to a broker and wait for delivery confirmation.</p>
+        <h2>Shipper — Where the Goods Are</h2>
+        <p>The <strong>shipper</strong> is the physical origin point — a warehouse, factory, or distribution center where the freight is stored. The shipper prepares the cargo for pickup (packaging, labels, documentation).</p>
+        <blockquote>
+          <strong>Important distinction from customer:</strong> The <strong>shipper</strong> is just the physical location. The <strong>customer</strong> is whoever pays for the transportation — usually a broker, a third-party logistics company, or sometimes the shipper themselves. As a dispatcher, you communicate with brokers (customers), but the driver interacts with shippers (warehouses).
+        </blockquote>
         <h3>Shipper Problems for Dispatchers</h3>
         <ul>
           <li><strong>Wrong weight</strong> — driver hits DOT scale overweight → fines and delays</li>
@@ -302,7 +305,7 @@ function getContent(chapter: number, lesson: number): object {
         <h3>Broker Problems</h3>
         <ul>
           <li><strong>Low-balling</strong> — offering below-market rates; counter confidently or walk away</li>
-          <li><strong>Double booking</strong> — same load offered to multiple carriers; losing carrier wastes time</li>
+          <li><strong>Double booking</strong> — when a broker first books a load as a carrier (directly from the shipper), then re-sells it to another carrier at a markup, acting as both carrier and broker on the same load</li>
           <li><strong>Rate renegotiation after signing</strong> — signed rate con is legally binding; hold the rate firmly</li>
         </ul>
 
@@ -324,7 +327,7 @@ function getContent(chapter: number, lesson: number): object {
         </ul>
 
         <h2>Driver — The Execution Point</h2>
-        <p>At <strong>pickup</strong>: driver signs the <strong>BOL (Bill of Lading)</strong> confirming what was loaded. At <strong>delivery</strong>: collects the signed <strong>POD (Proof of Delivery)</strong> confirming acceptable receipt.</p>
+        <p>At <strong>pickup</strong>: the <strong>shipper signs the BOL (Bill of Lading)</strong>. The driver receives a copy and verifies piece count, weight, and condition before signing an acknowledgment. At <strong>delivery</strong>: the driver collects the signed <strong>POD (Proof of Delivery)</strong> from the consignee confirming acceptable receipt.</p>
         <h3>HOS — Hours of Service</h3>
         <blockquote>
           Max <strong>11 hours driving</strong> per day | <strong>10-hour rest</strong> mandatory before next drive | <strong>70-hour</strong> on-duty limit per 8-day rolling period.<br/>
@@ -341,8 +344,11 @@ function getContent(chapter: number, lesson: number): object {
           <strong>Ключевой принцип:</strong> Ни один участник не работает изолированно. Водитель опоздал — страдает брокер. Брокер дал неверную информацию — страдает перевозчик. Диспетчер неправильно спланировал — все теряют деньги.
         </blockquote>
 
-        <h2>Shipper (Грузоотправитель) — Начало всего</h2>
-        <p><strong>Shipper</strong> — любой бизнес с товаром для перевозки (заводы, склады, Amazon, Walmart). Создаёт заявку с типом груза, весом, адресами и <strong>appointment windows</strong>. Передаёт груз брокеру и ждёт подтверждения доставки.</p>
+        <h2>Shipper (Грузоотправитель) — Где находится груз</h2>
+        <p><strong>Shipper</strong> — это физическая точка отправления: склад, завод или дистрибуционный центр, где хранится груз. Shipper готовит груз к отправке (упаковка, маркировка, документы).</p>
+        <blockquote>
+          <strong>Важное отличие от customer (заказчика):</strong> <strong>Shipper</strong> — это просто физическое место. <strong>Customer (заказчик)</strong> — тот, кто платит за перевозку: обычно брокер, 3PL-компания, а иногда и сам shipper. Диспетчер общается с брокерами (customers), а водитель взаимодействует с shippers (складами).
+        </blockquote>
         <h3>Проблемы от Shipper'а</h3>
         <ul>
           <li><strong>Неверный вес</strong> — водитель едет на весовую DOT с перегрузом → штрафы и задержки</li>
@@ -359,7 +365,7 @@ function getContent(chapter: number, lesson: number): object {
         <h3>Проблемы с брокерами</h3>
         <ul>
           <li><strong>Low-balling</strong> — заниженные ставки; торговаться уверенно или уходить</li>
-          <li><strong>Double booking</strong> — один груз нескольким carrier'ам; проигравший теряет время</li>
+          <li><strong>Double booking</strong> — ситуация, когда брокер сначала берёт груз как carrier (напрямую у shipper'а), а затем перепродаёт его другому carrier'у с наценкой, выступая одновременно и carrier'ом, и брокером на одном и том же грузе</li>
           <li><strong>Renegotiation после подписания rate con</strong> — подписанный rate con юридически обязателен; держать позицию твёрдо</li>
         </ul>
 
@@ -381,7 +387,7 @@ function getContent(chapter: number, lesson: number): object {
         </ul>
 
         <h2>Driver (Водитель) — Точка исполнения</h2>
-        <p>На <strong>pickup</strong>: водитель подписывает <strong>BOL (Bill of Lading)</strong> — подтверждение что и в каком состоянии загружено. На <strong>delivery</strong>: получает подписанный <strong>POD (Proof of Delivery)</strong> — подтверждение принятия груза.</p>
+        <p>На <strong>pickup</strong>: <strong>BOL (Bill of Lading) подписывает shipper</strong>. Водитель получает копию, проверяет количество мест, вес и состояние груза, после чего ставит подпись-подтверждение. На <strong>delivery</strong>: водитель получает подписанный <strong>POD (Proof of Delivery)</strong> от consignee — подтверждение, что груз принят в надлежащем состоянии.</p>
         <h3>HOS — Hours of Service</h3>
         <blockquote>
           Макс. <strong>11 часов вождения</strong> в сутки | <strong>10 часов отдыха</strong> обязательно до следующей смены | <strong>70 часов</strong> on-duty за любые 8 дней.<br/>
@@ -396,12 +402,12 @@ function getContent(chapter: number, lesson: number): object {
         questions: [
           {
             id: 'th-q1',
-            text: 'What is the primary role of a shipper in the US logistics chain?',
+            text: 'What is the shipper in US trucking terminology?',
             options: [
-              'To own and operate trucks for transportation',
-              'To generate the freight that needs to be transported',
-              'To negotiate rates between carriers and brokers',
-              'To manage driver HOS compliance',
+              'The company that owns trucks and hires drivers',
+              'The physical origin — warehouse or facility where the freight is stored and prepared for pickup',
+              'The person or company that pays for the transportation',
+              'The driver who transports the freight',
             ],
             correctIndex: 1,
           },
@@ -429,14 +435,14 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q4',
-            text: 'What does HOS (Hours of Service) limit, and why does it constrain dispatch planning?',
+            text: 'Under US HOS (Hours of Service) rules, what is the maximum driving time a driver can accumulate within the 14-hour on-duty window?',
             options: [
-              'Hours of Service — federal rules capping driving time per day, which means drivers cannot take loads they lack time to complete legally',
-              'Haul Over Speed — safety regulations about truck velocity on highways',
-              'Handling of Shipments — warehouse protocols for cargo loading',
-              'Hub Operations System — software carriers use to track active loads',
+              '10 hours of driving',
+              '11 hours of driving',
+              '12 hours of driving',
+              '14 hours of driving',
             ],
-            correctIndex: 0,
+            correctIndex: 1,
           },
           {
             id: 'th-q5',
@@ -451,25 +457,25 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q6',
-            text: 'A broker posts a load at $2,100 for 1,400 miles. What should the dispatcher do first?',
+            text: 'How is an independent dispatcher typically compensated when working with a carrier in the US sprinter-van segment?',
             options: [
-              'Accept immediately to secure the load before competitors',
-              'Calculate the RPM ($1.50/mile), compare it to the target rate, and decide whether to counter or walk away',
-              'Ask the driver if the rate is acceptable',
-              'Check the broker\'s reputation on load boards before engaging',
+              'The dispatcher receives a percentage of the margin between what the broker pays the carrier and what is actually paid out to the driver/truck — not a percentage of the gross load revenue',
+              'A flat monthly retainer paid by the broker regardless of load volume',
+              'A fixed 10% of the gross load revenue paid directly by the shipper',
+              'Nothing — dispatchers are considered part of the broker\'s office and are compensated by the brokerage',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
           },
           {
             id: 'th-q7',
-            text: 'What does "double booking" mean in freight brokerage and how does it harm carriers?',
+            text: 'What does "double booking" actually mean in US freight brokerage?',
             options: [
-              'Booking two loads for the same driver simultaneously',
-              'A broker offering the same load to multiple carriers at once — the losing carrier wastes time and loses planned miles with zero compensation',
-              'A dispatcher booking loads two days in advance to guarantee availability',
-              'Signing two rate confirmations for the same shipper on the same day',
+              'When a broker first books a load as a carrier directly from the shipper, then re-sells that same load to another carrier at a markup — acting as both carrier and broker on the same load',
+              'Booking two separate loads for the same driver on the same day to maximize miles',
+              'Posting the same truck on two different load boards at the same time',
+              'A dispatcher accidentally accepting two rate confirmations for conflicting pickup times',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
           },
           {
             id: 'th-q8',
@@ -506,14 +512,14 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q11',
-            text: 'Mini-case: Your driver just delivered in Phoenix, AZ — a notoriously weak outbound freight market. You find two options: Load A goes to Los Angeles, paying $900 for 370 miles ($2.43 RPM). Load B goes to Denver, paying $1,400 for 600 miles ($2.33 RPM). What is the best approach?',
+            text: 'Mini-case (sprinter van): Your driver just finished delivery in Phoenix, AZ — the truck is empty and ready. The load board shows:\n\nOption A: PHX → Los Angeles, CA | 380 mi | $1,200 | RPM $3.16\nOption B: PHX → Denver, CO | 830 mi | $2,600 | RPM $3.13\nOption C: Wait 24 hours in Phoenix for "better rates"\nOption D: Deadhead 1,000 mi to Dallas, TX for a "better market"\n\nWhat is the strongest move for a sprinter van?',
             options: [
-              'Take Load B — higher total dollars always means a better load',
-              'Take Load A — higher RPM is always the deciding factor',
-              'Evaluate both metrics and destinations: Load A has better RPM and puts the driver in LA (strong outbound market with better next-load opportunities) — likely the stronger choice overall',
-              'Reject both and wait — rates from Phoenix will improve significantly within 24 hours',
+              'Option A — PHX → LA: fast turnover, solid $3.16/mi RPM, and LA is a strong sprinter market where the next load is easy to find',
+              'Option B — PHX → Denver: highest gross dollars, Denver is always a strong return market',
+              'Option C — Wait 24 hours — rates from Phoenix almost always rise overnight',
+              'Option D — Deadhead 1,000 mi to Dallas for a better market, absorb the fuel cost, book a big load there',
             ],
-            correctIndex: 2,
+            correctIndex: 0,
           },
           {
             id: 'th-q12',
@@ -532,12 +538,12 @@ function getContent(chapter: number, lesson: number): object {
         questions: [
           {
             id: 'th-q1',
-            text: 'Какова основная роль shipper в логистической цепочке США?',
+            text: 'Что такое shipper в терминологии грузоперевозок США?',
             options: [
-              'Владеть и управлять грузовиками для перевозок',
-              'Формировать груз, который необходимо перевезти',
-              'Вести переговоры о ставках между carriers и брокерами',
-              'Контролировать соблюдение HOS водителями',
+              'Компания, владеющая грузовиками и нанимающая водителей',
+              'Физическая точка отправления — склад или объект, где хранится и готовится к отправке груз',
+              'Человек или компания, оплачивающая перевозку',
+              'Водитель, который везёт груз',
             ],
             correctIndex: 1,
           },
@@ -565,14 +571,14 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q4',
-            text: 'Что ограничивает HOS (Hours of Service) и как это влияет на планирование диспетчера?',
+            text: 'Согласно правилам HOS (Hours of Service) в США, сколько максимум часов водитель может проехать за 14-часовое рабочее окно?',
             options: [
-              'Hours of Service — федеральные правила, ограничивающие время вождения в сутки: водитель не может взять груз, который не успеет завершить в рамках лимита',
-              'Haul Over Speed — ограничения скорости грузовиков на шоссе',
-              'Handling of Shipments — складские протоколы погрузки',
-              'Hub Operations System — программа отслеживания активных грузов',
+              '10 часов за рулём',
+              '11 часов за рулём',
+              '12 часов за рулём',
+              '14 часов за рулём',
             ],
-            correctIndex: 0,
+            correctIndex: 1,
           },
           {
             id: 'th-q5',
@@ -587,25 +593,25 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q6',
-            text: 'Брокер выставляет груз за $2 100 на 1 400 миль. Что диспетчер должен сделать в первую очередь?',
+            text: 'Как обычно оплачивается работа независимого диспетчера, работающего с carrier\'ом в сегменте sprinter van в США?',
             options: [
-              'Принять сразу, чтобы забрать груз раньше конкурентов',
-              'Рассчитать RPM ($1,50/миля), сравнить с целевой ставкой и решить: торговаться или искать другой вариант',
-              'Спросить водителя, устраивает ли его эта ставка',
-              'Проверить репутацию брокера на бирже грузов перед звонком',
+              'Диспетчер получает процент от маржи между тем, что брокер платит carrier\'у, и тем, что фактически выплачивается водителю/машине, — не процент от валовой стоимости груза',
+              'Фиксированный ежемесячный retainer от брокера вне зависимости от объёма грузов',
+              'Фиксированные 10% от валовой стоимости груза, оплачиваемые напрямую shipper\'ом',
+              'Ничего — диспетчеры считаются сотрудниками офиса брокера и оплачиваются брокерской компанией',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
           },
           {
             id: 'th-q7',
-            text: 'Что такое double booking в работе брокеров и как это вредит carriers?',
+            text: 'Что на самом деле означает "double booking" в американском брокерском бизнесе?',
             options: [
-              'Бронирование двух грузов для одного водителя одновременно',
-              'Ситуация, когда брокер отдаёт один груз сразу нескольким carriers — проигравший тратит время впустую и теряет запланированные мили без какой-либо компенсации',
-              'Бронирование грузов диспетчером за два дня вперёд для гарантии загрузки',
-              'Подписание двух rate con от одного shipper\'а в один день',
+              'Ситуация, когда брокер сначала берёт груз как carrier напрямую у shipper\'а, а затем перепродаёт его другому carrier\'у с наценкой, выступая одновременно и carrier\'ом, и брокером на одном и том же грузе',
+              'Бронирование двух разных грузов для одного водителя в один день ради увеличения миль',
+              'Размещение одного и того же грузовика одновременно на двух разных load board\'ах',
+              'Случайное подписание двух rate con с пересекающимся временем pickup',
             ],
-            correctIndex: 1,
+            correctIndex: 0,
           },
           {
             id: 'th-q8',
@@ -642,14 +648,14 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'th-q11',
-            text: 'Мини-кейс: Ваш водитель только что сдал груз в Phoenix, AZ — известный слабый исходящий рынок. Два варианта: Груз A в Лос-Анджелес, $900 за 370 миль ($2,43 RPM). Груз B в Денвер, $1 400 за 600 миль ($2,33 RPM). Как лучше действовать?',
+            text: 'Мини-кейс (sprinter van): Водитель только что сдал груз в Phoenix, AZ — машина пустая, готов брать следующий. На load board:\n\nВариант A: PHX → Лос-Анджелес, CA | 380 миль | $1 200 | RPM $3,16\nВариант B: PHX → Денвер, CO | 830 миль | $2 600 | RPM $3,13\nВариант C: Подождать 24 часа в Фениксе "лучших ставок"\nВариант D: Deadhead 1 000 миль в Даллас, TX ради "более сильного рынка"\n\nКакое решение сильнее всего для sprinter van?',
             options: [
-              'Взять груз B — больше денег в абсолютных цифрах всегда лучше',
-              'Взять груз A — более высокий RPM всегда является решающим критерием',
-              'Оценить оба показателя и направления: у груза A лучше RPM, и он ставит водителя в LA — сильный исходящий рынок с лучшими возможностями для следующего груза. Скорее всего, более сильный выбор в комплексе',
-              'Отказаться от обоих и ждать — ставки из Феникса существенно вырастут в течение 24 часов',
+              'Вариант A — PHX → LA: быстрый оборот, уверенные $3,16/миля, и LA — сильный рынок для sprinter van, где следующий груз найти легко',
+              'Вариант B — PHX → Денвер: максимальная общая сумма, Денвер всегда сильный обратный рынок',
+              'Вариант C — Подождать 24 часа: ставки из Феникса почти всегда вырастают за ночь',
+              'Вариант D — Deadhead 1 000 миль в Даллас: стоимость топлива отобьётся крупным грузом на сильном рынке',
             ],
-            correctIndex: 2,
+            correctIndex: 0,
           },
           {
             id: 'th-q12',
@@ -683,13 +689,13 @@ function getContent(chapter: number, lesson: number): object {
         <h2>8:00 AM — Load Search + RPM Calculation</h2>
         <p>Search load boards (Truckstop) filtered by driver's pickup location. Evaluate by lane direction (strong outbound market at destination?) and always calculate RPM — not just total dollars.</p>
         <blockquote>
-          Load A: $2,400 / 1,100 mi = <strong>$2.18 RPM</strong> | Load B: $3,200 / 1,800 mi = <strong>$1.78 RPM</strong><br/>
-          Load B pays $800 more total — but Load A earns $0.40 more per mile. Always run the math.
+          Load A: $1,800 / 1,100 mi = <strong>$1.64 RPM</strong> | Load B: $2,400 / 1,800 mi = <strong>$1.33 RPM</strong><br/>
+          Load B pays $600 more total — but Load A earns $0.31 more per mile. Always run the math.
         </blockquote>
 
         <h2>9:15 AM — Broker Call + Negotiation</h2>
         <blockquote>
-          Broker posts $1,900. You: <em>"Truck in Atlanta today, clean carrier. I need $2,200 to make the numbers work."</em> Broker: <em>"Best I can do is $2,050."</em> You: <em>"Split it — $2,125?"</em> Broker: <em>"Done. Sending rate con."</em><br/>
+          Broker posts $1,400. You: <em>"Truck in Atlanta today, clean carrier. I need $1,700 to make the numbers work."</em> Broker: <em>"Best I can do is $1,550."</em> You: <em>"Split it — $1,625?"</em> Broker: <em>"Done. Sending rate con."</em><br/>
           Result: +$225 above posted rate. Check load board rate history before calling. Never accept the first price.
         </blockquote>
 
@@ -712,9 +718,9 @@ function getContent(chapter: number, lesson: number): object {
 
         <h2>Delivery Complete + Daily Metrics</h2>
         <blockquote>
-          <strong>Full cycle result:</strong> Negotiated $1,900 → $2,125 | Zero deadhead | POD collected | Next load already confirmed<br/><br/>
+          <strong>Full cycle result:</strong> Negotiated $1,400 → $1,625 | Zero deadhead | POD collected | Next load already confirmed<br/><br/>
           <strong>Key daily metrics:</strong><br/>
-          <strong>RPM target</strong> — typically $1.80–$2.50+ (any load below requires justification)<br/>
+          <strong>RPM target (Sprinter / Cargo Van, 2026 market)</strong> — realistic range is $1.20–$1.80/mi on average lanes, $1.80–$2.50/mi on hot lanes / high-demand corridors, and $0.90–$1.30/mi in slow markets. Short runs (under 300 mi) can reach $1.80+/mi.<br/>
           <strong>Deadhead %</strong> — target below 10–15%<br/>
           <strong>Detention claims</strong> — claim every incident; unclaimed detention is lost revenue<br/>
           <strong>On-time delivery rate</strong> — brokers track this; high rate = preferred carrier status
@@ -735,13 +741,13 @@ function getContent(chapter: number, lesson: number): object {
         <h2>8:00 — Поиск груза + расчёт RPM</h2>
         <p>Ищем на load board/Truckstop с фильтром по позиции водителя. Оцениваем lane (сильный ли рынок в точке доставки?) и всегда считаем RPM — не только итоговую сумму.</p>
         <blockquote>
-          Груз A: $2 400 / 1 100 миль = <strong>$2,18 RPM</strong> | Груз B: $3 200 / 1 800 миль = <strong>$1,78 RPM</strong><br/>
-          Груз B платит на $800 больше — но Груз A выгоднее на $0,40 за каждую милю. Всегда считайте математику.
+          Груз A: $1 800 / 1 100 миль = <strong>$1,64 RPM</strong> | Груз B: $2 400 / 1 800 миль = <strong>$1,33 RPM</strong><br/>
+          Груз B платит на $600 больше — но Груз A выгоднее на $0,31 за каждую милю. Всегда считайте математику.
         </blockquote>
 
         <h2>9:15 — Звонок брокеру + переговоры</h2>
         <blockquote>
-          Брокер выставляет $1 900. Вы: <em>"Машина в Атланте сегодня, надёжный carrier. Мне нужно $2 200."</em> Брокер: <em>"Лучшее — $2 050."</em> Вы: <em>"Поделим — $2 125?"</em> Брокер: <em>"Договорились."</em><br/>
+          Брокер выставляет $1 400. Вы: <em>"Машина в Атланте сегодня, надёжный carrier. Мне нужно $1 700."</em> Брокер: <em>"Лучшее — $1 550."</em> Вы: <em>"Поделим — $1 625?"</em> Брокер: <em>"Договорились."</em><br/>
           Результат: +$225 сверх выставленной ставки. Проверьте историю load board до звонка. Никогда не принимайте первую цену.
         </blockquote>
 
@@ -764,9 +770,9 @@ function getContent(chapter: number, lesson: number): object {
 
         <h2>Доставка завершена + ключевые метрики</h2>
         <blockquote>
-          <strong>Итог полного цикла:</strong> Выторговано $1 900 → $2 125 | Нулевой deadhead | POD получен | Следующий груз подтверждён<br/><br/>
+          <strong>Итог полного цикла:</strong> Выторговано $1 400 → $1 625 | Нулевой deadhead | POD получен | Следующий груз подтверждён<br/><br/>
           <strong>Ключевые ежедневные метрики:</strong><br/>
-          <strong>Целевой RPM</strong> — обычно $1,80–$2,50+ (груз ниже порога требует обоснования)<br/>
+          <strong>Целевой RPM (Sprinter / Cargo Van, рынок 2026)</strong> — реалистичный диапазон: $1,20–$1,80/миля на средних рейсах, $1,80–$2,50/миля на популярных направлениях/hot lanes, $0,90–$1,30/миля на слабом рынке. Короткие рейсы (до 300 миль) могут доходить до $1,80+/миля.<br/>
           <strong>% deadhead</strong> — цель ниже 10–15%<br/>
           <strong>Заявки на detention</strong> — требовать при каждом инциденте; незаявленный detention — потерянная выручка<br/>
           <strong>Процент своевременных доставок</strong> — брокеры отслеживают; высокий показатель = статус предпочтительного carrier'а
@@ -787,10 +793,10 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'dm-q2',
-            text: 'A load pays $3,200 for 1,800 miles. Another load pays $2,400 for 1,100 miles. Which has the better RPM and what does that mean?',
+            text: 'A load pays $2,400 for 1,800 miles. Another load pays $1,800 for 1,100 miles. Which has the better RPM and what does that mean?',
             options: [
-              'The $3,200 load — higher total pay always means better profitability',
-              'The $2,400 load — its RPM is $2.18/mile vs $1.78/mile, meaning it generates more profit per mile after costs',
+              'The $2,400 load — higher total pay always means better profitability',
+              'The $1,800 load — its RPM is $1.64/mile vs $1.33/mile, meaning it generates more profit per mile after costs',
               'They are equal — total pay and RPM are the same metric',
               'RPM only matters for loads over 1,500 miles',
             ],
@@ -923,10 +929,10 @@ function getContent(chapter: number, lesson: number): object {
           },
           {
             id: 'dm-q2',
-            text: 'Груз A платит $3 200 за 1 800 миль. Груз B платит $2 400 за 1 100 миль. У какого лучше RPM и что это означает?',
+            text: 'Груз A платит $2 400 за 1 800 миль. Груз B платит $1 800 за 1 100 миль. У какого лучше RPM и что это означает?',
             options: [
               'Груз A — более высокая итоговая сумма всегда означает большую прибыльность',
-              'Груз B — его RPM $2,18/миля против $1,78/миля, то есть он приносит больше прибыли на каждую милю после расходов',
+              'Груз B — его RPM $1,64/миля против $1,33/миля, то есть он приносит больше прибыли на каждую милю после расходов',
               'Они равны — итоговая сумма и RPM — это одно и то же',
               'RPM важен только для грузов свыше 1 500 миль',
             ],
@@ -1765,8 +1771,8 @@ function getContent(chapter: number, lesson: number): object {
 
         <h3>US Regions and Their Freight Profiles</h3>
         <ul>
-          <li><strong>West Coast (CA, OR, WA)</strong> — High-volume market. LA Ports (LA/Long Beach) drive massive import freight. CA outbound east is strong; CA inbound can be soft (too many trucks chasing it).</li>
-          <li><strong>Mountain West (CO, UT, NV, MT, WY, ID)</strong> — Lower density. Denver is the main hub. Montana/Wyoming are near-freight deserts — hard to find return loads. Salt Lake City is a growing distribution center.</li>
+          <li><strong>West Coast (CA, OR, WA)</strong> — High-volume market for big trucks. LA Ports drive massive import freight; CA outbound east is strong. <strong>Warning for sprinter vans:</strong> Oregon and Washington are weak sprinter markets — the freight mix is dominated by logging, agriculture, and full-truckload lanes, so small expedited loads are rare. Washington is typically a deadhead state for sprinters — do not end-route a sprinter there without a confirmed outbound.</li>
+          <li><strong>Mountain West (CO, UT, NV, MT, WY, ID)</strong> — Lower density. Denver is the main hub. Montana, Wyoming, Idaho and North Dakota are near-freight deserts for sprinter vans — avoid dead-ending here. Salt Lake City is the only realistic recovery point in the region.</li>
           <li><strong>Southwest (TX, NM, AZ)</strong> — Texas is a top freight state. Dallas/FW and Houston are major hubs; TX→Midwest and TX→Southeast corridors are highly active. Arizona (Phoenix) is moderate; New Mexico is limited.</li>
           <li><strong>Midwest (IL, OH, IN, MI, MO, KS)</strong> — Chicago is the US freight capital — intersection of nearly all major highways. Columbus, OH and Indianapolis are major DCs. Memphis, TN (FedEx global hub) is one of the busiest logistics centers worldwide.</li>
           <li><strong>Southeast (GA, FL, NC, SC)</strong> — Atlanta is the dominant hub. Florida has strong inbound; outbound can be soft off-season. Charlotte, NC is a growing market.</li>
@@ -1788,6 +1794,10 @@ function getContent(chapter: number, lesson: number): object {
         <h3>Freight Corridors + Lane Strength</h3>
         <p><strong>Strong bidirectional:</strong> CA ↔ TX | TX ↔ Midwest | Southeast ↔ Northeast | Midwest ↔ Mid-Atlantic.</p>
         <p><strong>Strong outbound, soft inbound:</strong> CA outbound east (strong); CA inbound (soft — too many trucks). FL inbound (easy); FL outbound (soft off-season).</p>
+        <h3>Strong vs. Weak Markets for Sprinter Vans</h3>
+        <p><strong>Strong sprinter markets</strong> (plenty of small expedited loads, fast turnover, easy to find the next load): <strong>Chicago, Dallas, Atlanta, Miami, NYC/NJ, Houston, Charlotte</strong>.</p>
+        <p><strong>Weak sprinter markets</strong> (avoid dead-ending — few small loads, long wait times): <strong>Montana, Wyoming, Idaho, North Dakota, Maine, rural Washington, rural Oregon</strong>. These states are fine for big trucks hauling logging/agriculture, but not for a sprinter that needs its next load within hours.</p>
+        <blockquote><strong>Philosophy:</strong> For a sprinter van, taking a load to Texas at $1.30/mi is often better than hauling a high-RPM load into a dead market like Montana. The next load matters as much as the current load.</blockquote>
         <blockquote><strong>Pro tip:</strong> After delivering in a soft market, start searching the next load BEFORE the driver arrives. Every empty hour is lost money.</blockquote>
 
         <h3>Seasonal Patterns</h3>
@@ -1805,8 +1815,8 @@ function getContent(chapter: number, lesson: number): object {
 
         <h3>Регионы США и их грузовые профили</h3>
         <ul>
-          <li><strong>Западное побережье (CA, OR, WA)</strong> — Высокий объём. Порты LA/Long Beach — огромный поток импорта. Исходящий из CA на восток — сильный; входящий в CA — мягкий (слишком много грузовиков туда едет).</li>
-          <li><strong>Mountain West (CO, UT, NV, MT, WY, ID)</strong> — Низкая плотность. Денвер — главный хаб. Монтана/Вайоминг — почти грузовые пустыни. Солт-Лейк-Сити — растущий дистрибьюторский центр.</li>
+          <li><strong>Западное побережье (CA, OR, WA)</strong> — Высокий объём для больших грузовиков. Порты LA/Long Beach — огромный поток импорта; исходящий из CA на восток — сильный. <strong>Важно для sprinter van:</strong> Орегон и Вашингтон — слабые рынки для sprinter van. Там доминируют лесозаготовка, сельское хозяйство и FTL-направления, мелких экспресс-грузов почти нет. Вашингтон — типичный deadhead-штат для sprinter'ов, не ставьте туда машину без подтверждённого обратного груза.</li>
+          <li><strong>Mountain West (CO, UT, NV, MT, WY, ID)</strong> — Низкая плотность. Денвер — главный хаб. Монтана, Вайоминг, Айдахо и Северная Дакота — грузовые пустыни для sprinter van, туда заезжать нельзя. Солт-Лейк-Сити — единственная реалистичная точка восстановления в регионе.</li>
           <li><strong>Юго-Запад (TX, NM, AZ)</strong> — Техас — ведущий грузовой штат. Даллас/Форт-Уэрт и Хьюстон — крупнейшие хабы; TX→Midwest и TX→Southeast — высококонкурентные коридоры. Аризона (Финикс) умеренная; Нью-Мексико ограниченная.</li>
           <li><strong>Средний Запад (IL, OH, IN, MI, MO, KS)</strong> — Чикаго — грузовая столица США. Колумбус (OH) и Индианаполис — крупные дистрибьюторские центры. Мемфис, TN (глобальный хаб FedEx) — один из самых загруженных логистических центров мира.</li>
           <li><strong>Юго-Восток (GA, FL, NC, SC)</strong> — Атланта — доминирующий хаб. Флорида: входящий сильный, исходящий в несезон мягкий. Шарлотт (NC) — растущий рынок.</li>
@@ -1828,6 +1838,10 @@ function getContent(chapter: number, lesson: number): object {
         <h3>Грузовые коридоры + сила маршрутов</h3>
         <p><strong>Сильные двусторонние:</strong> CA ↔ TX | TX ↔ Midwest | Southeast ↔ Northeast | Midwest ↔ Mid-Atlantic.</p>
         <p><strong>Сильный исходящий, слабый входящий:</strong> CA исходящий восток (сильный); CA входящий (мягкий). FL входящий (сильный); FL исходящий в несезон (слабый).</p>
+        <h3>Сильные и слабые рынки для Sprinter Van</h3>
+        <p><strong>Сильные рынки для sprinter van</strong> (много мелких экспресс-грузов, быстрый оборот, следующий груз найти легко): <strong>Чикаго, Лос-Анджелес, Даллас, Атланта, Майами, NYC/NJ, Хьюстон, Шарлотт</strong>.</p>
+        <p><strong>Слабые рынки для sprinter van</strong> (не ставьте машину туда без обратного груза — мало мелких грузов, долгое ожидание): <strong>Монтана, Вайоминг, Айдахо, Северная Дакота, Мэн, сельский Вашингтон, сельский Орегон</strong>. Эти штаты подходят для больших грузовиков (лес, с/х), но не для sprinter van, которому нужен следующий груз в течение нескольких часов.</p>
+        <blockquote><strong>Принцип:</strong> Для sprinter van груз в Техас по $1,30/миля часто выгоднее, чем груз с высоким RPM в мёртвый рынок типа Монтаны. Следующий груз важен не меньше, чем текущий.</blockquote>
         <blockquote><strong>Совет профи:</strong> После доставки в слабый рынок — искать следующий груз ДО прибытия водителя. Каждый час простоя — потерянные деньги.</blockquote>
 
         <h3>Сезонные закономерности</h3>

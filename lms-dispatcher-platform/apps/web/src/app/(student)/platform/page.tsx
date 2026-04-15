@@ -126,7 +126,7 @@ export default function PlatformPage() {
 
   const completedCount = progress?.chapters?.filter((c: any) => c.status === 'COMPLETED').length ?? 0;
   const totalChapters = 9;
-  const isUnlocked = completedCount >= totalChapters;
+  const isUnlocked = true;
   const progressPct = Math.round((completedCount / totalChapters) * 100);
 
   if (!isUnlocked) {

@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { QUESTIONS, DAILY_EXAMS, PASS_THRESHOLD, TOTAL_QUESTIONS } from '@/data/daily-exams';
 import { useDailyExamStore } from '@/lib/stores/daily-exam.store';
+import { useAuthStore } from '@/lib/stores/auth.store';
+import { useLang } from '@/lib/i18n/lang-context';
+import { EXAM_TRANSLATIONS_EN } from '@/data/daily-exams-en';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mascot SVG
@@ -37,8 +40,8 @@ function MascotSvg({ mood = 'neutral', size = 80 }: { mood?: 'neutral' | 'happy'
       {/* Eyes */}
       {mood === 'happy' || mood === 'celebrate' ? (
         <>
-          <path d="M 34 {eyeY} Q 38 32 42 {eyeY}" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          <path d="M 58 {eyeY} Q 62 32 66 {eyeY}" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d={`M 34 ${eyeY} Q 38 32 42 ${eyeY}`} stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d={`M 58 ${eyeY} Q 62 32 66 ${eyeY}`} stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         </>
       ) : mood === 'thinking' ? (
         <>
@@ -85,60 +88,60 @@ function MascotSvg({ mood = 'neutral', size = 80 }: { mood?: 'neutral' | 'happy'
 // ─────────────────────────────────────────────────────────────────────────────
 // Vocabulary pairs for matching mini-game
 // ─────────────────────────────────────────────────────────────────────────────
-const VOCAB_PAIRS: Record<number, { term: string; def: string }[]> = {
+const VOCAB_PAIRS: Record<number, { term: string; def: string; defEn: string }[]> = {
   1: [
-    { term: 'Shipper', def: 'Грузоотправитель' },
-    { term: 'Carrier', def: 'Перевозчик' },
-    { term: 'Broker', def: 'Посредник' },
-    { term: 'RPM', def: 'Ставка за милю' },
+    { term: 'Shipper', def: 'Грузоотправитель', defEn: 'Cargo sender' },
+    { term: 'Carrier', def: 'Перевозчик', defEn: 'Trucking company' },
+    { term: 'Broker', def: 'Посредник', defEn: 'Freight intermediary' },
+    { term: 'RPM', def: 'Ставка за милю', defEn: 'Rate per mile' },
   ],
   2: [
-    { term: 'Dead Zone', def: 'Зона без грузов' },
-    { term: 'Backhaul', def: 'Обратный груз' },
-    { term: 'Hotspot', def: 'Активная зона' },
-    { term: 'Freight Zone', def: 'Зона грузопотока' },
+    { term: 'Dead Zone', def: 'Зона без грузов', defEn: 'Area with no loads' },
+    { term: 'Backhaul', def: 'Обратный груз', defEn: 'Return load' },
+    { term: 'Hotspot', def: 'Активная зона', defEn: 'High-demand area' },
+    { term: 'Freight Zone', def: 'Зона грузопотока', defEn: 'Freight traffic zone' },
   ],
   3: [
-    { term: 'Dry Van', def: 'Закрытый фургон' },
-    { term: 'Reefer', def: 'Рефрижератор' },
-    { term: 'Flatbed', def: 'Открытая платформа' },
-    { term: 'Tanker', def: 'Цистерна' },
+    { term: 'Dry Van', def: 'Закрытый фургон', defEn: 'Enclosed trailer' },
+    { term: 'Reefer', def: 'Рефрижератор', defEn: 'Refrigerated trailer' },
+    { term: 'Flatbed', def: 'Открытая платформа', defEn: 'Open platform trailer' },
+    { term: 'Tanker', def: 'Цистерна', defEn: 'Tank trailer' },
   ],
   4: [
-    { term: 'Rate Con', def: 'Подтверждение ставки' },
-    { term: 'BOL', def: 'Транспортная накладная' },
-    { term: 'POD', def: 'Подтверждение доставки' },
-    { term: 'TONU', def: 'Оплата за отмену' },
+    { term: 'Rate Con', def: 'Подтверждение ставки', defEn: 'Rate confirmation' },
+    { term: 'BOL', def: 'Транспортная накладная', defEn: 'Bill of Lading' },
+    { term: 'POD', def: 'Подтверждение доставки', defEn: 'Proof of Delivery' },
+    { term: 'TONU', def: 'Оплата за отмену', defEn: 'Cancellation fee' },
   ],
   5: [
-    { term: 'DAT', def: 'Биржа грузов' },
-    { term: 'Load Board', def: 'Доска объявлений' },
-    { term: 'Posting', def: 'Объявление о грузе' },
-    { term: 'Bid', def: 'Ставка на груз' },
+    { term: 'DAT', def: 'Биржа грузов', defEn: 'Freight exchange' },
+    { term: 'Load Board', def: 'Доска объявлений', defEn: 'Load listing board' },
+    { term: 'Posting', def: 'Объявление о грузе', defEn: 'Load listing' },
+    { term: 'Bid', def: 'Ставка на груз', defEn: 'Rate offer on a load' },
   ],
   6: [
-    { term: 'Spot Rate', def: 'Текущая рыночная ставка' },
-    { term: 'Lane', def: 'Маршрутное направление' },
-    { term: 'Dedicated', def: 'Закреплённый маршрут' },
-    { term: 'Factoring', def: 'Факторинг дебиторки' },
+    { term: 'Spot Rate', def: 'Текущая рыночная ставка', defEn: 'Current market rate' },
+    { term: 'Lane', def: 'Маршрутное направление', defEn: 'Route/corridor' },
+    { term: 'Dedicated', def: 'Закреплённый маршрут', defEn: 'Dedicated route' },
+    { term: 'Factoring', def: 'Факторинг дебиторки', defEn: 'Invoice factoring' },
   ],
   7: [
-    { term: 'HOS', def: 'Режим труда и отдыха' },
-    { term: 'ELD', def: 'Электронный журнал' },
-    { term: 'DOT', def: 'Транспортный департамент' },
-    { term: 'CDL', def: 'Коммерческие права' },
+    { term: 'HOS', def: 'Режим труда и отдыха', defEn: 'Hours of Service' },
+    { term: 'ELD', def: 'Электронный журнал', defEn: 'Electronic logging device' },
+    { term: 'DOT', def: 'Транспортный департамент', defEn: 'Dept. of Transportation' },
+    { term: 'CDL', def: 'Коммерческие права', defEn: 'Commercial driver license' },
   ],
   8: [
-    { term: 'Detention', def: 'Оплата за простой' },
-    { term: 'Layover', def: 'Вынужденный ночлег' },
-    { term: 'Lumper', def: 'Разгрузчик склада' },
-    { term: 'FSC', def: 'Топливная надбавка' },
+    { term: 'Detention', def: 'Оплата за простой', defEn: 'Wait time pay' },
+    { term: 'Layover', def: 'Вынужденный ночлег', defEn: 'Forced overnight stay' },
+    { term: 'Lumper', def: 'Разгрузчик склада', defEn: 'Warehouse unloader' },
+    { term: 'FSC', def: 'Топливная надбавка', defEn: 'Fuel surcharge' },
   ],
   9: [
-    { term: 'Breakdown', def: 'Поломка грузовика' },
-    { term: 'Repower', def: 'Смена тягача' },
-    { term: 'Dispute', def: 'Спор по оплате' },
-    { term: 'No-show', def: 'Водитель не явился' },
+    { term: 'Breakdown', def: 'Поломка грузовика', defEn: 'Truck breakdown' },
+    { term: 'Repower', def: 'Смена тягача', defEn: 'Tractor swap' },
+    { term: 'Dispute', def: 'Спор по оплате', defEn: 'Payment dispute' },
+    { term: 'No-show', def: 'Водитель не явился', defEn: 'Driver no-show' },
   ],
 };
 
@@ -184,10 +187,15 @@ const CHAPTER_COLORS: Record<number, { bg: string; border: string; badge: string
   9: { bg: 'bg-red-50',    border: 'border-red-200',    badge: 'bg-red-500',    text: 'text-red-700' },
 };
 
-const CHAPTER_NAMES: Record<number, string> = {
+const CHAPTER_NAMES_RU: Record<number, string> = {
   1: 'Введение', 2: 'География', 3: 'Оборудование',
   4: 'Документы', 5: 'Биржи грузов', 6: 'Брокеры',
   7: 'Водители', 8: 'Переговоры', 9: 'Проблемы',
+};
+const CHAPTER_NAMES_EN: Record<number, string> = {
+  1: 'Introduction', 2: 'Geography', 3: 'Equipment',
+  4: 'Documents', 5: 'Load Boards', 6: 'Brokers',
+  7: 'Drivers', 8: 'Negotiation', 9: 'Problems',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,13 +204,14 @@ const CHAPTER_NAMES: Record<number, string> = {
 type MatchTile = { id: string; text: string; type: 'term' | 'def'; pairIndex: number; matched: boolean; wrong: boolean };
 
 function MatchingGame({ chapter, onComplete }: { chapter: number; onComplete: (correct: boolean) => void }) {
+  const { lang } = useLang();
   const pairs = VOCAB_PAIRS[chapter] ?? VOCAB_PAIRS[1];
   const [tiles, setTiles] = useState<MatchTile[]>(() => {
     const terms: MatchTile[] = pairs.map((p, i) => ({
       id: `t${i}`, text: p.term, type: 'term', pairIndex: i, matched: false, wrong: false,
     }));
     const defs: MatchTile[] = pairs.map((p, i) => ({
-      id: `d${i}`, text: p.def, type: 'def', pairIndex: i, matched: false, wrong: false,
+      id: `d${i}`, text: lang === 'en' ? p.defEn : p.def, type: 'def', pairIndex: i, matched: false, wrong: false,
     }));
     // Shuffle each column independently
     const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
@@ -265,7 +274,7 @@ function MatchingGame({ chapter, onComplete }: { chapter: number; onComplete: (c
   return (
     <div className="duo-slide-up">
       <p className="text-center text-sm font-semibold text-gray-500 dark:text-[#a1a1a6] mb-3">
-        🔗 Соедини термины с определениями
+        {lang === 'ru' ? '🔗 Соедини термины с определениями' : '🔗 Match terms with definitions'}
       </p>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
@@ -310,7 +319,7 @@ function MatchingGame({ chapter, onComplete }: { chapter: number; onComplete: (c
         </div>
       </div>
       {mistakes > 0 && (
-        <p className="text-center text-xs text-red-400 mt-2">Ошибок: {mistakes}</p>
+        <p className="text-center text-xs text-red-400 mt-2">{lang === 'ru' ? 'Ошибок:' : 'Mistakes:'} {mistakes}</p>
       )}
     </div>
   );
@@ -402,6 +411,7 @@ function GridQuestion({ options, selectedId, onAnswer }: OptionProps) {
 
 // ── Format 3: Chips / tap-to-fill ───────────────────────────────────────────
 function ChipsQuestion({ options, selectedId, onAnswer }: OptionProps) {
+  const { lang } = useLang();
   const selected = options.find(o => o.id === selectedId);
   const showResult = !!selectedId;
   return (
@@ -417,7 +427,7 @@ function ChipsQuestion({ options, selectedId, onAnswer }: OptionProps) {
             {selected.correct ? '✅ ' : '❌ '}{selected.text}
           </span>
         ) : (
-          <span className="text-gray-400 dark:text-[#636366] text-sm">👆 Нажмите на правильный ответ</span>
+          <span className="text-gray-400 dark:text-[#636366] text-sm">{lang === 'ru' ? '👆 Нажмите на правильный ответ' : '👆 Tap the correct answer'}</span>
         )}
       </div>
       {/* Chips */}
@@ -448,6 +458,7 @@ function ChipsQuestion({ options, selectedId, onAnswer }: OptionProps) {
 // ── Format 4: Binary (Верно / Неверно) ──────────────────────────────────────
 // Shows either the CORRECT or a WRONG option — user judges which
 function BinaryQuestion({ options, selectedId, onAnswer }: OptionProps) {
+  const { lang } = useLang();
   const correct = options.find(o => o.correct)!;
   const wrongs  = options.filter(o => !o.correct);
   // Stable per render: show correct half the time
@@ -471,11 +482,11 @@ function BinaryQuestion({ options, selectedId, onAnswer }: OptionProps) {
         !showResult ? 'bg-white dark:bg-[#2c2c2e] border-gray-200 dark:border-white/[0.08]' :
         (showCorrect ? 'bg-emerald-50 border-emerald-400' : 'bg-red-50 border-red-300')
       )}>
-        <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-[#636366] mb-2">Это верное утверждение?</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-[#636366] mb-2">{lang === 'ru' ? 'Это верное утверждение?' : 'Is this statement correct?'}</p>
         <p className="font-bold text-base text-gray-900 dark:text-[#f5f5f7] leading-snug">«{shown.text}»</p>
         {showResult && (
           <p className={cn('text-xs font-bold mt-2', showCorrect ? 'text-emerald-600' : 'text-red-500')}>
-            {showCorrect ? '✅ Это правильный ответ' : '❌ Это неверный ответ'}
+            {showCorrect ? (lang === 'ru' ? '✅ Это правильный ответ' : '✅ This is the correct answer') : (lang === 'ru' ? '❌ Это неверный ответ' : '❌ This is an incorrect answer')}
           </p>
         )}
       </div>
@@ -494,7 +505,7 @@ function BinaryQuestion({ options, selectedId, onAnswer }: OptionProps) {
               : 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
           )}
         >
-          ✅ ВЕРНО
+          {lang === 'ru' ? '✅ ВЕРНО' : '✅ TRUE'}
         </button>
         <button
           onClick={() => handleVote(false)}
@@ -508,13 +519,13 @@ function BinaryQuestion({ options, selectedId, onAnswer }: OptionProps) {
               : 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
           )}
         >
-          ❌ НЕВЕРНО
+          {lang === 'ru' ? '❌ НЕВЕРНО' : '❌ FALSE'}
         </button>
       </div>
 
       {showResult && (
         <p className="text-center text-xs text-gray-400 dark:text-[#636366] mt-3">
-          Правильный ответ: <strong className="text-gray-700 dark:text-[#f5f5f7]">{correct.text}</strong>
+          {lang === 'ru' ? 'Правильный ответ:' : 'Correct answer:'} <strong className="text-gray-700 dark:text-[#f5f5f7]">{correct.text}</strong>
         </p>
       )}
     </div>
@@ -533,6 +544,7 @@ function splitChunks(text: string): string[] {
 }
 
 function WordBuilder({ options, selectedId, onAnswer }: OptionProps) {
+  const { lang } = useLang();
   const correct   = options.find(o => o.correct)!;
   const wrongOpt  = options.find(o => !o.correct)!;
   const chunks    = splitChunks(correct.text);
@@ -565,7 +577,7 @@ function WordBuilder({ options, selectedId, onAnswer }: OptionProps) {
   return (
     <div className="duo-slide-up">
       <p className="text-center text-xs font-bold text-gray-400 dark:text-[#636366] uppercase tracking-widest mb-3">
-        🔤 Собери правильный ответ
+        {lang === 'ru' ? '🔤 Собери правильный ответ' : '🔤 Build the correct answer'}
       </p>
 
       {/* Assembly zone */}
@@ -576,7 +588,7 @@ function WordBuilder({ options, selectedId, onAnswer }: OptionProps) {
           : assembled.length ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 dark:bg-[#1c1c1e] border-gray-200 dark:border-white/[0.08]'
       )}>
         {assembled.length === 0 && (
-          <span className="text-gray-400 dark:text-[#636366] text-sm w-full text-center">Нажимай слова ниже →</span>
+          <span className="text-gray-400 dark:text-[#636366] text-sm w-full text-center">{lang === 'ru' ? 'Нажимай слова ниже →' : 'Tap words below →'}</span>
         )}
         {assembled.map((id, i) => {
           const chunk = bank.find(t => t.id === id)!;
@@ -618,13 +630,13 @@ function WordBuilder({ options, selectedId, onAnswer }: OptionProps) {
               ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-md'
               : 'bg-gray-100 dark:bg-[#2c2c2e] text-gray-400 dark:text-[#636366] cursor-not-allowed border-2 border-gray-200 dark:border-white/[0.08]'
           )}>
-          {allUsed ? 'Проверить ✓' : `Осталось выбрать: ${bank.filter(t => !t.used).length}`}
+          {allUsed ? (lang === 'ru' ? 'Проверить ✓' : 'Check ✓') : (lang === 'ru' ? `Осталось выбрать: ${bank.filter(t => !t.used).length}` : `Remaining: ${bank.filter(t => !t.used).length}`)}
         </button>
       )}
 
       {showResult && (
         <div className={cn('text-center text-sm font-bold mt-1', isCorrectAssembly ? 'text-emerald-600' : 'text-red-500')}>
-          {isCorrectAssembly ? '🎉 Верно собрано!' : `Правильно: «${correct.text}»`}
+          {isCorrectAssembly ? (lang === 'ru' ? '🎉 Верно собрано!' : '🎉 Correct!') : (lang === 'ru' ? `Правильно: «${correct.text}»` : `Correct: "${correct.text}"`)}
         </div>
       )}
     </div>
@@ -673,7 +685,10 @@ type Screen = 'intro' | 'question' | 'result';
 type FeedbackState = { visible: boolean; correct: boolean; explanation: string; correctText: string } | null;
 
 export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void }) {
+  const { lang } = useLang();
+  const CHAPTER_NAMES = lang === 'ru' ? CHAPTER_NAMES_RU : CHAPTER_NAMES_EN;
   const { setResult } = useDailyExamStore();
+  const userId = useAuthStore((s) => s.user?.id ?? 'anon');
   const exam = DAILY_EXAMS.find(e => e.day === day)!;
   const questions = exam.questionIds.map(id => QUESTIONS[id]);
 
@@ -688,7 +703,19 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
   const [showConfetti, setShowConfetti] = useState(false);
   const [matchingDone, setMatchingDone] = useState(false);
 
-  const currentQ = questions[qIndex];
+  const _rawQ = questions[qIndex];
+  const currentQ = lang === 'en' && _rawQ && EXAM_TRANSLATIONS_EN[_rawQ.id]
+    ? {
+        ..._rawQ,
+        text: EXAM_TRANSLATIONS_EN[_rawQ.id].text,
+        options: EXAM_TRANSLATIONS_EN[_rawQ.id].options.map((text, i) => ({
+          ..._rawQ.options[i],
+          text,
+        })),
+        explanation: EXAM_TRANSLATIONS_EN[_rawQ.id].explanation,
+        scenario: EXAM_TRANSLATIONS_EN[_rawQ.id].scenario ?? _rawQ.scenario,
+      }
+    : _rawQ;
   const isMatchingRound = (qIndex + 1) % 5 === 0;
   const col = CHAPTER_COLORS[currentQ?.chapter ?? 1];
   const qFormat = getFormat(qIndex);
@@ -696,6 +723,11 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
   const advance = useCallback(() => {
     setFeedback(null);
     setSelectedId(null);
+    // Game over: out of hearts -> end exam regardless of remaining questions
+    if (hearts <= 0) {
+      setScreen('result');
+      return;
+    }
     if (qIndex + 1 >= TOTAL_QUESTIONS) {
       setScreen('result');
     } else {
@@ -703,7 +735,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
       setCardKey(k => k + 1);
       setMatchingDone(false);
     }
-  }, [qIndex]);
+  }, [qIndex, hearts]);
 
   const handleAnswer = useCallback((optionId: string) => {
     if (selectedId || feedback) return;
@@ -739,7 +771,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
     setFeedback({
       visible: true,
       correct,
-      explanation: correct ? 'Все пары совпали! Отличная работа!' : 'Некоторые пары не совпали. Повтори термины!',
+      explanation: correct ? (lang === 'ru' ? 'Все пары совпали! Отличная работа!' : 'All pairs matched! Great job!') : (lang === 'ru' ? 'Некоторые пары не совпали. Повтори термины!' : 'Some pairs did not match. Review the terms!'),
       correctText: '',
     });
   }, []);
@@ -748,7 +780,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
   useEffect(() => {
     if (screen === 'result') {
       const passed = score >= PASS_THRESHOLD;
-      setResult(day, score, passed);
+      setResult(userId, day, score, passed);
       if (passed) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
@@ -765,24 +797,24 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
         </div>
         <div className="duo-pop text-center mb-8">
           <div className="inline-block bg-blue-600 text-white text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest">
-            День {day}
+            {lang === 'ru' ? 'День' : 'Day'} {day}
           </div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-[#f5f5f7] mb-1">Ежедневный экзамен</h1>
-          <p className="text-gray-500 dark:text-[#a1a1a6] text-sm">20 вопросов · 3 жизни · Нужно 15 правильных</p>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-[#f5f5f7] mb-1">{lang === 'ru' ? 'Ежедневный экзамен' : 'Daily Exam'}</h1>
+          <p className="text-gray-500 dark:text-[#a1a1a6] text-sm">{lang === 'ru' ? '20 вопросов · 3 жизни · Нужно 15 правильных' : '20 questions · 3 lives · Need 15 correct'}</p>
         </div>
 
         <div className="flex gap-6 mb-8 duo-slide-up">
           <div className="text-center">
             <div className="text-2xl mb-1">❤️❤️❤️</div>
-            <p className="text-xs text-gray-400 dark:text-[#636366]">3 жизни</p>
+            <p className="text-xs text-gray-400 dark:text-[#636366]">{lang === 'ru' ? '3 жизни' : '3 lives'}</p>
           </div>
           <div className="text-center">
             <div className="text-2xl mb-1">⚡</div>
-            <p className="text-xs text-gray-400 dark:text-[#636366]">XP за ответы</p>
+            <p className="text-xs text-gray-400 dark:text-[#636366]">{lang === 'ru' ? 'XP за ответы' : 'XP for answers'}</p>
           </div>
           <div className="text-center">
             <div className="text-2xl mb-1">🔗</div>
-            <p className="text-xs text-gray-400 dark:text-[#636366]">Мини-игры</p>
+            <p className="text-xs text-gray-400 dark:text-[#636366]">{lang === 'ru' ? 'Мини-игры' : 'Mini-games'}</p>
           </div>
         </div>
 
@@ -790,10 +822,10 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
           onClick={() => setScreen('question')}
           className="w-64 py-4 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-lg rounded-2xl shadow-lg transition-all duration-200"
         >
-          Начать! 🚀
+          {lang === 'ru' ? 'Начать! 🚀' : 'Start! 🚀'}
         </button>
         <button onClick={onBack} className="mt-4 text-sm text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:text-[#a1a1a6] transition-colors">
-          ← Назад к экзаменам
+          {lang === 'ru' ? '← Назад к экзаменам' : '← Back to exams'}
         </button>
       </div>
     );
@@ -815,9 +847,9 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
         <div className="duo-pop text-center mb-6">
           <div className="text-5xl mb-3">{passed ? '🏆' : '😔'}</div>
           <h2 className="text-3xl font-black text-gray-900 dark:text-[#f5f5f7] mb-1">
-            {passed ? 'Сдал!' : 'Не сдал'}
+            {passed ? (lang === 'ru' ? 'Сдал!' : 'Passed!') : (lang === 'ru' ? 'Не сдал' : 'Failed')}
           </h2>
-          <p className="text-gray-500 dark:text-[#a1a1a6]">{passed ? 'Отличная работа, диспетчер!' : 'Не расстраивайся, попробуй ещё раз'}</p>
+          <p className="text-gray-500 dark:text-[#a1a1a6]">{passed ? (lang === 'ru' ? 'Отличная работа, диспетчер!' : 'Great job, dispatcher!') : (lang === 'ru' ? 'Не расстраивайся, попробуй ещё раз' : "Don't worry, try again")}</p>
         </div>
 
         {/* Score */}
@@ -841,11 +873,11 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-gray-50 dark:bg-[#1c1c1e] rounded-2xl p-3">
                 <div className="text-xl font-black text-emerald-600">{score}</div>
-                <div className="text-[10px] text-gray-400 dark:text-[#636366] font-medium">ВЕРНО</div>
+                <div className="text-[10px] text-gray-400 dark:text-[#636366] font-medium">{lang === 'ru' ? 'ВЕРНО' : 'CORRECT'}</div>
               </div>
               <div className="bg-gray-50 dark:bg-[#1c1c1e] rounded-2xl p-3">
                 <div className="text-xl font-black text-red-500">{TOTAL_QUESTIONS - score}</div>
-                <div className="text-[10px] text-gray-400 dark:text-[#636366] font-medium">НЕВЕРНО</div>
+                <div className="text-[10px] text-gray-400 dark:text-[#636366] font-medium">{lang === 'ru' ? 'НЕВЕРНО' : 'WRONG'}</div>
               </div>
               <div className="bg-gray-50 dark:bg-[#1c1c1e] rounded-2xl p-3">
                 <div className="text-xl font-black text-yellow-600">{xp}</div>
@@ -855,7 +887,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
 
             {/* Hearts remaining */}
             <div className="mt-4 flex items-center justify-center gap-2">
-              <span className="text-xs text-gray-400 dark:text-[#636366]">Осталось жизней:</span>
+              <span className="text-xs text-gray-400 dark:text-[#636366]">{lang === 'ru' ? 'Осталось жизней:' : 'Lives remaining:'}</span>
               <Hearts count={hearts} />
             </div>
           </div>
@@ -870,13 +902,13 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
             }}
             className="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-base rounded-2xl shadow transition-all"
           >
-            🔄 Пройти ещё раз
+            {lang === 'ru' ? '🔄 Пройти ещё раз' : '🔄 Try again'}
           </button>
           <button
             onClick={onBack}
             className="w-full py-3 bg-white dark:bg-[#2c2c2e] hover:bg-gray-50 dark:hover:bg-white/5 dark:bg-[#1c1c1e] active:scale-95 text-gray-700 dark:text-[#f5f5f7] font-semibold rounded-2xl border border-gray-200 dark:border-white/[0.08] transition-all"
           >
-            ← К списку экзаменов
+            {lang === 'ru' ? '← К списку экзаменов' : '← Back to exams'}
           </button>
         </div>
       </div>
@@ -915,11 +947,11 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
           {/* Chapter badge */}
           <div className="duo-card-enter flex items-center justify-center gap-2 mb-3">
             <span className={cn('text-xs font-black px-3 py-1 rounded-full text-white', col.badge)}>
-              Глава {currentQ.chapter} · {CHAPTER_NAMES[currentQ.chapter]}
+              {lang === 'ru' ? 'Глава' : 'Chapter'} {currentQ.chapter} · {CHAPTER_NAMES[currentQ.chapter]}
             </span>
             {isMatchingRound && (
               <span className="text-xs font-bold px-2 py-1 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
-                🔗 Мини-игра
+                {lang === 'ru' ? '🔗 Мини-игра' : '🔗 Mini-game'}
               </span>
             )}
           </div>
@@ -929,7 +961,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
             {/* Scenario */}
             {currentQ.scenario && (
               <div className="bg-white/80 border border-blue-200 rounded-2xl p-3 mb-3 text-sm text-blue-800 leading-relaxed">
-                <span className="font-bold text-blue-600 text-xs uppercase tracking-wide block mb-1">📋 Ситуация</span>
+                <span className="font-bold text-blue-600 text-xs uppercase tracking-wide block mb-1">{lang === 'ru' ? '📋 Ситуация' : '📋 Scenario'}</span>
                 {currentQ.scenario}
               </div>
             )}
@@ -938,7 +970,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
               <p className="text-gray-900 dark:text-[#f5f5f7] font-bold text-base leading-snug">{currentQ.text}</p>
             )}
             {isMatchingRound && (
-              <p className={cn('text-sm font-bold mb-1', col.text)}>Глава {currentQ.chapter}: Словарный раунд</p>
+              <p className={cn('text-sm font-bold mb-1', col.text)}>{lang === 'ru' ? 'Глава' : 'Chapter'} {currentQ.chapter}: {lang === 'ru' ? 'Словарный раунд' : 'Vocabulary Round'}</p>
             )}
           </div>
 
@@ -946,11 +978,11 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
           {!isMatchingRound && (
             <div className="flex justify-center mb-3">
               <span className="text-[10px] font-bold text-gray-400 dark:text-[#636366] uppercase tracking-widest px-3 py-1 bg-white dark:bg-[#2c2c2e] rounded-full border border-gray-200 dark:border-white/[0.08] shadow-sm">
-                {qFormat === 'grid'   ? '🟦 Выбери карточку'        :
-                 qFormat === 'chips'  ? '🫧 Нажми правильный ответ' :
-                 qFormat === 'binary' ? '⚖️ Верно или неверно?'     :
-                 qFormat === 'word'   ? '🔤 Собери ответ'           :
-                                        '📋 Выбери ответ'}
+                {qFormat === 'grid'   ? (lang === 'ru' ? '🟦 Выбери карточку' : '🟦 Pick a card')        :
+                 qFormat === 'chips'  ? (lang === 'ru' ? '🫧 Нажми правильный ответ' : '🫧 Tap the correct answer') :
+                 qFormat === 'binary' ? (lang === 'ru' ? '⚖️ Верно или неверно?' : '⚖️ True or false?')     :
+                 qFormat === 'word'   ? (lang === 'ru' ? '🔤 Собери ответ' : '🔤 Build the answer')           :
+                                        (lang === 'ru' ? '📋 Выбери ответ' : '📋 Choose answer')}
               </span>
             </div>
           )}
@@ -976,11 +1008,11 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
             style={{ maxWidth: 672, marginLeft: 'auto', marginRight: 'auto', padding: '14px 20px 16px' }}
           >
             <p style={{ textAlign: 'center', fontWeight: 900, fontSize: 14, color: '#111827', marginBottom: 4 }}>
-              {feedback.correct ? '✅ Правильно!' : '❌ Неверно'}
+              {feedback.correct ? (lang === 'ru' ? '✅ Правильно!' : '✅ Correct!') : (lang === 'ru' ? '❌ Неверно' : '❌ Incorrect')}
             </p>
             {!feedback.correct && feedback.correctText && (
               <p style={{ textAlign: 'center', fontSize: 12, color: '#111827', marginBottom: 2 }}>
-                Ответ: <strong>{feedback.correctText}</strong>
+                {lang === 'ru' ? 'Ответ:' : 'Answer:'} <strong>{feedback.correctText}</strong>
               </p>
             )}
             <p style={{ textAlign: 'center', fontSize: 12, color: '#374151', lineHeight: 1.5, marginBottom: 12 }}>
@@ -991,7 +1023,7 @@ export function DuoExamPlayer({ day, onBack }: { day: number; onBack: () => void
               style={{ display: 'block', width: '100%', padding: '9px 0', fontWeight: 900, fontSize: 14, borderRadius: 12, border: 'none', cursor: 'pointer' }}
               className={cn(feedback.correct ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}
             >
-              {qIndex + 1 >= TOTAL_QUESTIONS ? 'Завершить 🏁' : 'Продолжить →'}
+              {qIndex + 1 >= TOTAL_QUESTIONS ? (lang === 'ru' ? 'Завершить 🏁' : 'Finish 🏁') : (lang === 'ru' ? 'Продолжить →' : 'Continue →')}
             </button>
           </div>
         </div>

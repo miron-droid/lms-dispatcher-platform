@@ -27,7 +27,11 @@ const LOADS: Load[] = [
   { id: 'L12', origin: 'Louisville, KY', dest: 'Detroit, MI', miles: 350, dh: 175, rate: 875, rpm: 2.50, weight: 38000, commodity: 'Plastics', equipment: 'Dry Van', broker: 'Werner', age: '3h', backhaul: 'moderate' },
 ];
 
-const BEST_IDS = ['L3', 'L7', 'L9']; // Best picks: low DH, good RPM, strong backhaul
+// Best picks for a sprinter van: strong destination market (strong backhaul) + good RPM.
+// A load to a strong sprinter market (Chicago, Dallas, Atlanta, Columbus, etc.) is preferred
+// even at slightly lower RPM, because the next load is easier to find.
+const BEST_IDS = ['L1', 'L3', 'L9']; // Memphis→Dallas (strong), Nashville→Chicago (strong), Nashville→Columbus (strong)
+const GOOD_IDS = ['L2', 'L6', 'L7', 'L11']; // also reasonable: strong/moderate backhaul, decent RPM
 
 export function LoadBoardSimulator() {
   const { lang } = useLang();
@@ -65,8 +69,17 @@ export function LoadBoardSimulator() {
 
   const score = submitted ? (() => {
     let s = 0;
-    selected.forEach(id => { if (BEST_IDS.includes(id)) s += 33; });
-    return Math.min(100, s + (selected.size === 3 ? 1 : 0));
+    selected.forEach(id => {
+      if (BEST_IDS.includes(id)) s += 30;
+      else if (GOOD_IDS.includes(id)) s += 18;
+      else {
+        const l = LOADS.find(x => x.id === id);
+        // Penalize weak-backhaul picks even if RPM is high (sprinter philosophy).
+        if (l && l.backhaul === 'weak') s += 2;
+        else s += 8;
+      }
+    });
+    return Math.min(100, s + (selected.size === 3 ? 10 : 0));
   })() : 0;
 
   return (

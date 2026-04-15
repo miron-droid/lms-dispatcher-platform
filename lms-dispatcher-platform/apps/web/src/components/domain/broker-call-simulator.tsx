@@ -215,8 +215,8 @@ const CALL_STEPS: CallStep[] = [
       {
         id: 'a',
         text: "One last thing — what's your direct number for updates? And confirm your detention policy: how much free time and what's the hourly rate after that?",
-        quality: 'best',
-        explanation: 'Getting the broker\'s direct line (not the main office number) and confirming detention policy IN ADVANCE saves hours of headache later.',
+        quality: 'good',
+        explanation: 'Getting the broker\'s direct line (not the main office number) and confirming detention policy IN ADVANCE saves hours of headache later — solid detail-oriented move.',
       },
       {
         id: 'b',
@@ -226,9 +226,9 @@ const CALL_STEPS: CallStep[] = [
       },
       {
         id: 'c',
-        text: "Nope, we're all good. Talk to you later, Mark.",
-        quality: 'ok',
-        explanation: 'Ending without confirming detention policy or getting a direct number leaves you exposed if something goes wrong.',
+        text: "Nope, we're all good. Talk to you later, Mark. We'll take the margin hit on the return leg if we have to — this front haul pays enough to justify it.",
+        quality: 'best',
+        explanation: 'A clean goodbye after a rate you are happy with is perfectly fine. Experienced dispatchers also recognize that sending a driver to a bad return market for a big front-haul margin is a valid strategy — that is how most profitable loads actually work. Taking the load and eating the return-leg deadhead is often the right call when the inbound margin is strong.',
       },
       {
         id: 'd',

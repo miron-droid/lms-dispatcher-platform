@@ -21,7 +21,7 @@ export function LangToggle() {
               className={cn(
                 'px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200',
                 active
-                  ? 'bg-white dark:bg-[#2c2c2e] text-brand-600 shadow-sm'
+                  ? 'bg-white dark:bg-[#3a3a3c] text-brand-600 dark:text-blue-400 shadow-sm'
                   : 'text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7]',
               )}
             >

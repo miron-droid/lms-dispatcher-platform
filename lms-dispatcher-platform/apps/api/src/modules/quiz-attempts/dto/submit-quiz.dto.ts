@@ -1,13 +1,26 @@
-import { IsInt, IsNotEmpty, IsString, Max, Min, IsDefined } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Max, Min, IsDefined } from "class-validator";
+
+/**
+ * Rich per-question answer entry sent by the frontend.
+ * The backend verifies correctness server-side by comparing
+ * against Lesson.content.quiz.questions[].correctIndex.
+ */
+export interface QuizAnswerEntry {
+  questionId: string;
+  selectedIndex: number;
+}
 
 export class SubmitQuizDto {
   @IsString()
   @IsNotEmpty()
   lessonId!: string;
 
-  // Accept either array (frontend currently sends number[]) or object map
+  // Accept either:
+  //   - legacy simple format: number[]  (index per question)
+  //   - rich format: { questionId, selectedIndex }[]
+  //   - legacy object map: Record<string, number | number[]>
   @IsDefined()
-  answers!: number[] | Record<string, number | number[]>;
+  answers!: number[] | QuizAnswerEntry[] | Record<string, number | number[]>;
 
   @IsInt()
   @Min(0)

@@ -10,6 +10,15 @@ interface AuthStore {
   isAuthenticated: () => boolean;
 }
 
+// Keys that are cleared on logout to prevent cross-user data leaks on shared devices.
+const APP_STORAGE_KEYS = [
+  'access_token',
+  'lms_gamification',
+  'daily-exam-results',
+  'dispatchgo-tour-seen-v1',
+  'dispatchgo-how-collapsed-v1',
+];
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   token: null,
@@ -23,9 +32,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   clearAuth: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      // Clean up any legacy gamification data
-      localStorage.removeItem('lms_gamification');
+      for (const key of APP_STORAGE_KEYS) {
+        try { localStorage.removeItem(key); } catch {}
+      }
     }
     set({ user: null, token: null });
   },

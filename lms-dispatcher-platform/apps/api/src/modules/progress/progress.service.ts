@@ -68,7 +68,7 @@ export class ProgressService {
     });
 
     const totalChapters = chapters.length;
-    const passedChapters = chapters.filter((c) => c.examPassed).length;
+    const passedChapters = chapters.filter((c: any) => c.status === "COMPLETED" || c.testPassed || c.examPassed).length;
 
     return {
       courseId,

@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, LogOut, Menu, X, Sun, Moon, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Menu, X, Sun, Moon, BarChart3, Crown, Building2 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { Logo } from '@/components/domain/logo';
+import { useTenant } from '@/lib/tenant-context';
 import { useLang } from '@/lib/i18n/lang-context';
 import { LangToggle } from '@/components/layout/lang-toggle';
 import { useTheme } from '@/lib/theme-context';
@@ -15,6 +16,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const { lang } = useLang();
+  const { company: tenantCompany } = useTenant();
   const user = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.clearAuth);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,6 +25,8 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
     { href: '/manager',       label: lang === 'ru' ? 'Дашборд' : 'Dashboard',  icon: LayoutDashboard, exact: true, badge: 0 },
     { href: '/manager/students', label: lang === 'ru' ? 'Студенты' : 'Students', icon: Users, badge: 0 },
     { href: '/manager/analytics', label: lang === 'ru' ? 'Аналитика' : 'Analytics', icon: BarChart3, badge: 0 },
+    ...(user?.email === 'miron@etlgroupll.com' ? [{ href: '/manager/control', label: lang === 'ru' ? 'Управление' : 'Control', icon: Crown, badge: 0 }] : []),
+    ...(user?.role === 'SUPER_ADMIN' ? [{ href: '/manager/companies', label: lang === 'ru' ? 'Компании' : 'Companies', icon: Building2, badge: 0 }] : []),
   ];
 
   const isActive = (item: typeof NAV[0]) =>
@@ -39,7 +43,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-[#2c2c2e] border-r border-gray-100 dark:border-[rgba(255,255,255,0.06)] z-50 flex-col">
         <div className="px-4 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)]">
           <Logo size={52} textSize="md" />
-          <p className="text-[10px] text-gray-400 dark:text-[#636366] mt-1 ml-[42px]">Manager Panel</p>
+          <p className="text-[10px] text-gray-400 dark:text-[#636366] mt-1 ml-[42px]">{tenantCompany ? tenantCompany.name : 'Manager Panel'}</p>
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 px-3 pt-4">
@@ -82,7 +86,7 @@ function ManagerShell({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-md border-b border-gray-100 dark:border-[rgba(255,255,255,0.08)] z-50 h-12 flex items-center px-4 justify-between">
         <Logo size={40} textSize="sm" />
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1.5 cursor-pointer">
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2.5 cursor-pointer">
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </header>

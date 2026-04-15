@@ -17,6 +17,17 @@ export interface QuizAttemptInput {
   score: number;
 }
 
+// One graded answer as returned by the backend after a quiz submission.
+// correctIndex is ONLY present here (it is stripped from GET /lessons/:id
+// for security) so the review screen uses this to show the right answer.
+export interface GradedAnswer {
+  questionId: string;
+  selectedIndex: number;
+  correctIndex: number;
+  isCorrect: boolean;
+  explanation?: string;
+}
+
 export interface QuizAttemptResult {
   xpEarned: number;
   totalXP: number;
@@ -29,6 +40,10 @@ export interface QuizAttemptResult {
   score?: number;
   correctAnswers?: number;
   totalQuestions?: number;
+  // Per-question graded review. Lets the client show a truthful
+  // "which ones did I get wrong and what was the correct answer?"
+  // breakdown after the quiz is submitted.
+  gradedAnswers?: GradedAnswer[];
 }
 
 export interface QuizAttemptRecord {

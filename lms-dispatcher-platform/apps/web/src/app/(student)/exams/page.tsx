@@ -7,6 +7,7 @@ import { GraduationCap, CalendarDays, CheckCircle2 } from 'lucide-react';
 import { useLang } from '@/lib/i18n/lang-context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { useDailyExamStore } from '@/lib/stores/daily-exam.store';
+import { useAuthStore } from '@/lib/stores/auth.store';
 import { DAILY_EXAMS, PASS_THRESHOLD } from '@/data/daily-exams';
 import { DuoExamPlayer } from '@/components/domain/duo-exam-player';
 
@@ -24,12 +25,14 @@ const DECISION_STYLE: Record<string, string> = {
 };
 
 export default function ExamsPage() {
-  const { t, translateTitle } = useLang();
+  const { t, translateTitle, lang } = useLang();
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ['my-exams'],
     queryFn: examsApi.myExams,
   });
-  const { results } = useDailyExamStore();
+  const { getUserResults } = useDailyExamStore();
+  const userId = useAuthStore((s) => s.user?.id ?? 'anon');
+  const results = getUserResults(userId);
   const [activeDay, setActiveDay] = useState<number | null>(null);
 
   const dailyCompleted = Object.keys(results).length;
@@ -54,10 +57,10 @@ export default function ExamsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <CalendarDays className="w-4 h-4 text-emerald-600" />
-          <h2 className="text-sm font-bold text-gray-700 dark:text-[#f5f5f7] uppercase tracking-wider">Ежедневные экзамены</h2>
+          <h2 className="text-sm font-bold text-gray-700 dark:text-[#f5f5f7] uppercase tracking-wider">{lang === 'ru' ? 'Ежедневные экзамены' : 'Daily Exams'}</h2>
           {dailyCompleted > 0 && (
             <span className="ml-auto text-xs text-gray-400 dark:text-[#636366]">
-              {dailyCompleted}/20 пройдено · {dailyPassed} сдано
+              {dailyCompleted}/20 {lang === 'ru' ? 'пройдено' : 'completed'} · {dailyPassed} {lang === 'ru' ? 'сдано' : 'passed'}
             </span>
           )}
         </div>
@@ -98,7 +101,7 @@ export default function ExamsPage() {
                 )}
 
                 <div>
-                  <p className="text-[10px] text-gray-400 dark:text-[#636366] text-center">День</p>
+                  <p className="text-[10px] text-gray-400 dark:text-[#636366] text-center">{lang === 'ru' ? 'День' : 'Day'}</p>
                   <p className="text-xl font-black text-gray-800 dark:text-[#f5f5f7] text-center leading-none">{exam.day}</p>
                 </div>
 
@@ -116,15 +119,15 @@ export default function ExamsPage() {
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-xs text-gray-400 dark:text-[#636366]">
-          <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Сдан</span>
-          <span>❌ Не сдан</span>
-          <span>📋 Не начат</span>
-          <span className="ml-auto">Проходной балл: {PASS_THRESHOLD}/20</span>
+          <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {lang === 'ru' ? 'Сдан' : 'Passed'}</span>
+          <span>{lang === 'ru' ? '❌ Не сдан' : '❌ Failed'}</span>
+          <span>{lang === 'ru' ? '📋 Не начат' : '📋 Not started'}</span>
+          <span className="ml-auto">{lang === 'ru' ? 'Проходной балл:' : 'Pass threshold:'} {PASS_THRESHOLD}/20</span>
         </div>
       </div>
 
       {/* ── Chapter exams section ───────────────────────────────────────────── */}
-      <h2 className="text-sm font-bold text-gray-500 dark:text-[#a1a1a6] uppercase tracking-wider mb-3">Экзамены по главам</h2>
+      <h2 className="text-sm font-bold text-gray-500 dark:text-[#a1a1a6] uppercase tracking-wider mb-3">{lang === 'ru' ? 'Экзамены по главам' : 'Chapter Exams'}</h2>
 
       {exams.length === 0 ? (
         <div className="text-center py-10 text-gray-400 dark:text-[#636366]">

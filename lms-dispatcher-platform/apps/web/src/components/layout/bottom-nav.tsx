@@ -7,11 +7,14 @@ import { useLang } from '@/lib/i18n/lang-context';
 import { useTheme } from '@/lib/theme-context';
 import { useGamification, LEVELS } from '@/lib/stores/gamification.store';
 import { Logo } from '@/components/domain/logo';
+import { useTenant } from '@/lib/tenant-context';
+import { LangToggle } from '@/components/layout/lang-toggle';
 import { useState, useEffect, useRef } from 'react';
 
 export function BottomNav() {
   const path = usePathname();
   const { t, lang } = useLang();
+  const { company: tenantCompany } = useTenant();
   const { resolved, setTheme } = useTheme();
   const { totalXP, streak, getLevel } = useGamification();
   const level = getLevel();
@@ -45,6 +48,7 @@ export function BottomNav() {
         <div className="px-4 py-4 border-b border-gray-100 dark:border-[rgba(255,255,255,0.06)]">
           <Link href="/learn">
             <Logo size={52} textSize="md" />
+            {tenantCompany && <p className="text-[10px] text-gray-400 dark:text-[#636366] mt-0.5 ml-[42px]">{tenantCompany.name}</p>}
           </Link>
         </div>
 
@@ -85,6 +89,7 @@ export function BottomNav() {
 
         {/* Theme toggle + Footer */}
         <div className="px-4 py-3 border-t border-gray-100 dark:border-[rgba(255,255,255,0.06)] space-y-2">
+          <LangToggle />
           <button
             onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-medium
@@ -93,7 +98,7 @@ export function BottomNav() {
             aria-label={resolved === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {resolved === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span>{resolved === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            <span>{resolved === 'dark' ? (lang === 'ru' ? 'Светлая' : 'Light') : (lang === 'ru' ? 'Тёмная' : 'Dark')}</span>
           </button>
           <p className="text-[10px] text-gray-300 dark:text-[#636366] text-center">DispatchGO v1.0</p>
         </div>

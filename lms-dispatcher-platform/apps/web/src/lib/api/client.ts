@@ -5,6 +5,18 @@ function getToken(): string | null {
   return localStorage.getItem('access_token');
 }
 
+function clearAuthOn401() {
+  if (typeof window === 'undefined') return;
+  try {
+    // Local redirect on 401 so users don't see broken 401-only UIs
+    const path = window.location.pathname;
+    if (!path.startsWith('/login')) {
+      localStorage.removeItem('access_token');
+      window.location.href = '/login';
+    }
+  } catch {}
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -13,15 +25,24 @@ export async function apiFetch<T>(
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
+      ...options.headers,
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
     },
   });
 
-  const json = await res.json();
-  if (!res.ok) {
-    throw new Error(json.message ?? 'Request failed');
+  // Safely parse body — tolerate empty/non-JSON responses
+  const text = await res.text();
+  let json: any = null;
+  if (text) {
+    try { json = JSON.parse(text); } catch { json = { message: text }; }
   }
-  return json.data as T;
+
+  if (!res.ok) {
+    if (res.status === 401) clearAuthOn401();
+    const msg = Array.isArray(json?.message) ? json.message.join(', ') : (json?.message ?? `HTTP ${res.status}`);
+    throw new Error(msg);
+  }
+
+  return (json?.data ?? json) as T;
 }

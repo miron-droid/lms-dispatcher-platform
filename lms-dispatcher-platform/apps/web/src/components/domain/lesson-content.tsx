@@ -2,6 +2,7 @@
 import type { TextContent, VideoContent, DialogueContent, CaseContent, QuizQuestion } from '@/types';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import DOMPurify from 'dompurify';
 import { useLang } from '@/lib/i18n/lang-context';
 import { SimulationBlock } from '@/components/domain/simulation-block';
 import { USFreightMap } from '@/components/domain/us-freight-map';
@@ -13,7 +14,7 @@ import { NegotiationGame } from '@/components/domain/negotiation-game';
 import { CrisisDashboard } from '@/components/domain/crisis-dashboard';
 import { DispatcherDaySimulator } from '@/components/domain/dispatcher-day-simulator';
 import { BrokerCallSimulator } from '@/components/domain/broker-call-simulator';
-import { quizApi, type QuizAnswerEntry } from '@/lib/api/quiz';
+import { quizApi, type QuizAnswerEntry, type GradedAnswer } from '@/lib/api/quiz';
 import { authApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { useGamificationToast, ACHIEVEMENTS } from '@/lib/stores/gamification.store';
@@ -93,7 +94,7 @@ function TextRenderer({ c, lessonId }: { c: TextContent; lessonId?: string }) {
  [&_figure]:my-6 lg:[&_figure]:my-8 [&_figure]:overflow-hidden [&_figure]:rounded-xl lg:[&_figure]:rounded-2xl [&_figure]:border [&_figure]:border-gray-100 dark:[&_figure]:border-[rgba(255,255,255,0.08)]
  [&_img]:w-full [&_img]:h-auto [&_img]:block [&_img]:object-cover lg:[&_img]:max-h-[500px] lg:[&_img]:object-contain lg:[&_img]:bg-gray-50 dark:lg:[&_img]:bg-[#2c2c2e]
  [&_figcaption]:text-xs [&_figcaption]:text-gray-500 dark:[&_figcaption]:text-[#636366] [&_figcaption]:italic [&_figcaption]:text-center [&_figcaption]:px-4 [&_figcaption]:py-2 [&_figcaption]:bg-gray-50 dark:[&_figcaption]:bg-[#2c2c2e]"
-        dangerouslySetInnerHTML={{ __html: body }}
+        dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(body, { ADD_TAGS: ['iframe'], ADD_ATTR: ['target', 'rel'] }) : body }}
       />
       {c.freightMap && <USFreightMap />}
       {c.equipmentMatcher && <EquipmentMatcher />}
@@ -125,7 +126,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-interface PreparedQuestion { id: string; text: string; options: string[]; correctIndex: number; originalIndex: number; optionOriginalIndexes: number[] }
+interface PreparedQuestion { id: string; text: string; options: string[]; correctIndex: number; originalIndex: number; optionOriginalIndexes: number[]; explanation?: string }
 
 function prepareQuestions(questions: QuizQuestion[]): PreparedQuestion[] {
   const indexedAll = questions.map((q, originalIndex) => ({ q, originalIndex }));
@@ -146,6 +147,7 @@ function prepareQuestions(questions: QuizQuestion[]): PreparedQuestion[] {
       correctIndex: shuffled.findIndex(x => x.correct),
       optionOriginalIndexes: shuffled.map(x => x.originalOptionIndex),
       originalIndex,
+      explanation: q.explanation,
     };
   });
 }
@@ -166,37 +168,50 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
   const [prepared, setPrepared]   = useState<PreparedQuestion[]>(() => prepareQuestions(questions));
   const [current, setCurrent]     = useState(0);
   const [selected, setSelected]   = useState<number | null>(null);
-  const [score, setScore]         = useState(0);
   const [finished, setFinished]   = useState(false);
   const [answers, setAnswers]     = useState<QuizAnswerEntry[]>([]);
+  // Track the shuffled UI index the user clicked for each question,
+  // keyed by questionId. Used to render the review screen (so we can
+  // highlight the option the student actually tapped, not just the
+  // canonical backend index).
+  const [selectedShuffledByQ, setSelectedShuffledByQ] =
+    useState<Record<string, number>>({});
   // Server-authoritative result from POST /quiz-attempts. Because
   // correctIndex is stripped from GET /lessons/:id for security, we
   // cannot grade locally — we display what the backend returns.
-  const [serverResult, setServerResult] = useState<{ score: number; correctAnswers: number; totalQuestions: number } | null>(null);
+  const [serverResult, setServerResult] = useState<{
+    score: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    gradedAnswers: GradedAnswer[];
+  } | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  // Re-prepare questions when the questions array changes (language switch)
+  // Re-prepare questions only when the question set actually changes
+  // (e.g. language switch), not on every React Query re-fetch.
+  // Using a stable key based on question IDs prevents the review screen
+  // from being wiped by the invalidateQueries() call after submission.
+  const questionsKey = questions.map(q => q.id).join(',');
   useEffect(() => {
     setPrepared(prepareQuestions(questions));
     setCurrent(0);
     setSelected(null);
-    setScore(0);
     setFinished(false);
     setAttempt(0);
     setAnswers([]);
+    setSelectedShuffledByQ({});
     setSubmitted(false);
     setServerResult(null);
-  }, [questions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionsKey]);
 
   const total   = prepared.length;
   const q       = prepared[current];
-  // Client-side count is unreliable because correctIndex is stripped
-  // from the lesson payload. Prefer the server-verified result once
-  // the submission round-trip completes.
-  const displayScore   = serverResult?.correctAnswers ?? score;
+  // Client-side grading is impossible because correctIndex is stripped
+  // from the lesson payload. All scoring comes from the server.
+  const displayScore   = serverResult?.correctAnswers ?? 0;
   const displayTotal   = serverResult?.totalQuestions ?? total;
-  const displayPercent = serverResult?.score
-    ?? (total > 0 ? Math.round((score / total) * 100) : 0);
+  const displayPercent = serverResult?.score ?? 0;
   const percent = displayPercent;
   // Quiz is considered passed only at >= 80% — this matches the lesson page
   // gating and the backend enforcement in lessons.service.ts.
@@ -223,26 +238,31 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
     setSubmitted(true);
     (async () => {
       try {
+        // Send zeros for score/correctAnswers — the server ignores the
+        // client's count and re-grades using its canonical quiz. We send
+        // 0 rather than a fake number so we never *claim* something we
+        // don't know.
         const res = await quizApi.submit({
           lessonId,
           answers,
           totalQuestions: total,
-          correctAnswers: score,
-          score: percent,
+          correctAnswers: 0,
+          score: 0,
         });
 
         // Trust the server's grading — it had access to the correct
         // answers (which are stripped from the client payload).
         const verifiedScore =
-          typeof res.score === 'number' ? res.score : percent;
+          typeof res.score === 'number' ? res.score : 0;
         const verifiedCorrect =
-          typeof res.correctAnswers === 'number' ? res.correctAnswers : score;
+          typeof res.correctAnswers === 'number' ? res.correctAnswers : 0;
         const verifiedTotal =
           typeof res.totalQuestions === 'number' ? res.totalQuestions : total;
         setServerResult({
           score: verifiedScore,
           correctAnswers: verifiedCorrect,
           totalQuestions: verifiedTotal,
+          gradedAnswers: Array.isArray(res.gradedAnswers) ? res.gradedAnswers : [],
         });
 
         // Invalidate the student's quiz-attempts cache so the lesson page
@@ -286,11 +306,10 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
         console.error('Quiz submit failed', e);
       }
     })();
-  }, [finished, submitted, lessonId, answers, total, score, percent, setUser, showToast, lang]);
+  }, [finished, submitted, lessonId, answers, total, setUser, showToast, lang, qc]);
 
   const handleSelect = (idx: number) => {
     if (selected !== null) return;
-    if (idx === q.correctIndex) setScore(s => s + 1);
     setSelected(idx);
     // Map the shuffled UI position back to the original option index
     // that the backend's canonical quiz expects. Without this mapping
@@ -301,6 +320,9 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
       next.push({ questionId: q.id, selectedIndex: originalSelectedIndex });
       return next;
     });
+    // Remember which shuffled option this student clicked so the
+    // review screen can highlight it even after we re-render.
+    setSelectedShuffledByQ(prev => ({ ...prev, [q.id]: idx }));
   };
 
   const retry = () => {
@@ -309,69 +331,189 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
     setPrepared(prepareQuestions(questions));
     setCurrent(0);
     setSelected(null);
-    setScore(0);
     setFinished(false);
     setAnswers([]);
+    setSelectedShuffledByQ({});
     setSubmitted(false);
     setServerResult(null);
   };
 
   // ── Result screen ──
   if (finished) {
+    const waitingForServer = !serverResult;
+    const gradedByQ = new Map<string, GradedAnswer>();
+    if (serverResult) {
+      for (const g of serverResult.gradedAnswers) gradedByQ.set(g.questionId, g);
+    }
+
     return (
-      <div
-        className={cn(
-          'mt-8 rounded-2xl border p-6 lg:p-8 text-center space-y-4 lg:max-w-xl lg:mx-auto transition-all',
-          passed
-            ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 shadow-lg shadow-emerald-500/10'
-            : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e]',
-        )}
-      >
-        {passed && (
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
-            </div>
+      <div className="mt-8 space-y-4 lg:max-w-xl lg:mx-auto">
+        {/* Summary card */}
+        <div
+          className={cn(
+            'rounded-2xl border p-6 lg:p-8 text-center space-y-4 transition-all',
+            waitingForServer
+              ? 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e]'
+              : passed
+                ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 shadow-lg shadow-emerald-500/10'
+                : 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2c2c2e]',
+          )}
+        >
+          {waitingForServer ? (
+            <>
+              <p className="text-base font-semibold text-gray-900 dark:text-[#f5f5f7]">
+                {lang === 'ru' ? 'Проверяем твои ответы…' : 'Grading your answers…'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">
+                {lang === 'ru'
+                  ? 'Секунду — сервер проверяет каждый вопрос.'
+                  : 'One moment — the server is checking each question.'}
+              </p>
+            </>
+          ) : (
+            <>
+              {passed && (
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                </div>
+              )}
+
+              <p className={cn(
+                'text-5xl font-bold',
+                passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-[#f5f5f7]',
+              )}>
+                {percent}%
+              </p>
+              <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">
+                {displayScore} {t('quiz_out_of')} {displayTotal} {t('quiz_correct')}
+              </p>
+
+              {passed ? (
+                <>
+                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-xl">
+                    {t('quiz_goal_achieved')}
+                  </p>
+                  <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 font-medium">
+                    {t('quiz_success_banner')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-red-600 dark:text-red-400 font-semibold text-lg">{t('quiz_goal_not_achieved')}</p>
+                  <p className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-[#a1a1a6]">
+                    <Lock className="w-3.5 h-3.5" />
+                    {t('quiz_locked_hint')}
+                  </p>
+                  {attempt + 1 >= MAX_ATTEMPTS ? (
+                    <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">{t('quiz_review_material')}</p>
+                  ) : (
+                    <button
+                      onClick={retry}
+                      className="mt-2 w-full py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm active:opacity-80"
+                    >
+                      {t('quiz_try_again')}
+                    </button>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Per-question review */}
+        {!waitingForServer && gradedByQ.size > 0 && (
+          <div className="rounded-2xl border border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#1c1c1e] p-4 lg:p-6 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-[#a1a1a6]">
+              {lang === 'ru' ? 'Разбор ответов' : 'Answer review'}
+            </p>
+            <ol className="space-y-3">
+              {prepared.map((pq, qi) => {
+                const g = gradedByQ.get(pq.id);
+                // If the backend didn't grade a question (e.g. the
+                // student skipped it somehow), treat it as wrong.
+                const isCorrect = g?.isCorrect === true;
+                const selectedShuffledIdx = selectedShuffledByQ[pq.id];
+                // Map the canonical backend correctIndex back to the
+                // shuffled UI position, so the review matches what the
+                // student actually saw on screen.
+                const correctShuffledIdx = g
+                  ? pq.optionOriginalIndexes.findIndex((oi) => oi === g.correctIndex)
+                  : -1;
+                const userAnswerText =
+                  typeof selectedShuffledIdx === 'number'
+                    ? pq.options[selectedShuffledIdx]
+                    : (lang === 'ru' ? '(без ответа)' : '(no answer)');
+                const correctAnswerText =
+                  correctShuffledIdx >= 0 ? pq.options[correctShuffledIdx] : '';
+
+                return (
+                  <li
+                    key={pq.id}
+                    className={cn(
+                      'rounded-xl border p-3 lg:p-4',
+                      isCorrect
+                        ? 'border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
+                        : 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10',
+                    )}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={cn(
+                          'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                          isCorrect
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-red-500 text-white',
+                        )}
+                        aria-label={isCorrect ? 'Correct' : 'Incorrect'}
+                      >
+                        {isCorrect ? '✓' : '✗'}
+                      </span>
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-[#f5f5f7] leading-snug">
+                          {qi + 1}. {pq.text}
+                        </p>
+                        <p className="text-xs">
+                          <span className="font-medium text-gray-600 dark:text-[#a1a1a6]">
+                            {lang === 'ru' ? 'Твой ответ: ' : 'Your answer: '}
+                          </span>
+                          <span className={cn(
+                            'font-semibold',
+                            isCorrect
+                              ? 'text-emerald-700 dark:text-emerald-300'
+                              : 'text-red-700 dark:text-red-300',
+                          )}>
+                            {userAnswerText}
+                          </span>
+                        </p>
+                        {!isCorrect && correctAnswerText && (
+                          <p className="text-xs">
+                            <span className="font-medium text-gray-600 dark:text-[#a1a1a6]">
+                              {lang === 'ru' ? 'Правильный ответ: ' : 'Correct answer: '}
+                            </span>
+                            <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                              {correctAnswerText}
+                            </span>
+                          </p>
+                        )}
+                        {!isCorrect && g?.explanation && (
+                          <div className="mt-1.5 p-2 rounded-lg bg-white/60 dark:bg-[#1c1c1e]/60 border border-gray-200 dark:border-[rgba(255,255,255,0.06)]">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-[#636366] mb-0.5">
+                              {lang === 'ru' ? 'Пояснение' : 'Explanation'}
+                            </p>
+                            <p className="text-xs text-gray-700 dark:text-[#a1a1a6] leading-relaxed">
+                              {g?.explanation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           </div>
-        )}
-
-        <p className={cn(
-          'text-5xl font-bold',
-          passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-[#f5f5f7]',
-        )}>
-          {percent}%
-        </p>
-        <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">
-          {displayScore} {t('quiz_out_of')} {displayTotal} {t('quiz_correct')}
-        </p>
-
-        {passed ? (
-          <>
-            <p className="text-emerald-600 dark:text-emerald-400 font-bold text-xl">
-              {t('quiz_goal_achieved')}
-            </p>
-            <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 font-medium">
-              {t('quiz_success_banner')}
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-red-500 font-semibold text-lg">{t('quiz_goal_not_achieved')}</p>
-            <p className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-[#a1a1a6]">
-              <Lock className="w-3.5 h-3.5" />
-              {t('quiz_locked_hint')}
-            </p>
-            {attempt + 1 >= MAX_ATTEMPTS ? (
-              <p className="text-sm text-gray-500 dark:text-[#a1a1a6]">{t('quiz_review_material')}</p>
-            ) : (
-              <button
-                onClick={retry}
-                className="mt-2 w-full py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm active:opacity-80"
-              >
-                {t('quiz_try_again')}
-              </button>
-            )}
-          </>
         )}
       </div>
     );
@@ -397,37 +539,55 @@ function QuizRenderer({ questions, lessonId }: { questions: QuizQuestion[]; less
 
       <div className="space-y-2">
         {q.options.map((opt, i) => {
+          // We intentionally do NOT show correct/incorrect styling at
+          // this stage. The client has no access to correctIndex (it's
+          // stripped server-side), so any ✅/❌ shown here would be a
+          // lie. Instead we just highlight the selected choice in a
+          // neutral brand color and show a full per-question review
+          // on the result screen once the backend has graded.
           const isSelected = selected === i;
-          const isCorrect  = i === q.correctIndex;
-          const showResult = selected !== null;
+          const hasSelected = selected !== null;
 
           return (
             <button
               key={i}
               onClick={() => handleSelect(i)}
-              disabled={selected !== null}
+              disabled={hasSelected}
               className={cn(
-                'w-full text-left flex items-start gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200',
-                !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] active:border-brand-400',
-                showResult && isCorrect && 'border-green-500 bg-green-50 dark:bg-green-500/10',
-                showResult && isSelected && !isCorrect && 'border-red-400 bg-red-50 dark:bg-red-500/10',
-                showResult && !isSelected && !isCorrect && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-40',
+                'w-full text-left flex items-start gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200 ease-out',
+                !hasSelected && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#1c1c1e] active:border-blue-400',
+                hasSelected && isSelected && 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/20 dark:ring-blue-400/15',
+                hasSelected && !isSelected && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] bg-white dark:bg-[#1c1c1e] opacity-75 saturate-0',
               )}
             >
               <span className={cn(
-                'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold mt-0.5',
-                !showResult && 'border-gray-300 dark:border-[#3a3a3c] text-gray-400 dark:text-[#636366]',
-                showResult && isCorrect && 'border-green-500 bg-green-500 text-white',
-                showResult && isSelected && !isCorrect && 'border-red-400 bg-red-400 text-white',
-                showResult && !isSelected && !isCorrect && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] text-gray-300 dark:text-[#636366]',
+                'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold mt-0.5 transition-all duration-200',
+                !hasSelected && 'border-gray-300 dark:border-[#3a3a3c] text-gray-500 dark:text-[#a1a1a6]',
+                hasSelected && isSelected && 'border-blue-500 bg-blue-500 text-white',
+                hasSelected && !isSelected && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] text-gray-400 dark:text-[#636366]',
               )}>
-                {OPTION_LABELS[i]}
+                {hasSelected && isSelected ? (
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                ) : (
+                  OPTION_LABELS[i]
+                )}
               </span>
-              <span className="text-sm text-gray-800 dark:text-[#f5f5f7] leading-relaxed">{opt}</span>
+              <span className="text-sm text-gray-900 dark:text-[#f5f5f7] leading-relaxed">{opt}</span>
             </button>
           );
         })}
       </div>
+
+      {/* Neutral confirmation — no correctness claim until the backend grades. */}
+      {selected !== null && (
+        <p className="text-xs text-gray-500 dark:text-[#a1a1a6] text-center pt-1">
+          {lang === 'ru'
+            ? 'Принято — увидишь результат в конце'
+            : 'Got it \u2014 you\u2019ll see results at the end.'}
+        </p>
+      )}
     </div>
   );
 }
@@ -482,7 +642,7 @@ function DialogueRenderer({ c }: { c: DialogueContent }) {
 }
 
 function CaseRenderer({ c }: { c: CaseContent }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
@@ -495,8 +655,7 @@ function CaseRenderer({ c }: { c: CaseContent }) {
       <p className="font-semibold text-gray-700 dark:text-[#a1a1a6]">{t('case_what_would_you_do')}</p>
       <div className="space-y-2">
         {c.options.map((opt, i) => {
-          const isChosen  = selected === i;
-          const isCorrect = i === c.correctIndex;
+          const isChosen = selected === i;
           const showResult = selected !== null;
 
           return (
@@ -506,20 +665,24 @@ function CaseRenderer({ c }: { c: CaseContent }) {
               disabled={selected !== null}
               className={cn(
                 'w-full text-left p-4 rounded-xl border-2 transition-all',
-                !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] active:border-brand-400',
-                showResult && isCorrect && 'border-green-500 bg-green-50 dark:bg-green-500/10',
-                showResult && isChosen && !isCorrect && 'border-red-400 bg-red-50 dark:bg-red-500/10',
-                showResult && !isChosen && !isCorrect && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-60',
+                !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] active:border-blue-400',
+                showResult && isChosen && 'border-blue-500 bg-blue-50 dark:bg-blue-500/10',
+                showResult && !isChosen && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-60',
               )}
             >
               <p className="font-medium text-gray-800 dark:text-[#f5f5f7]">{opt.label}</p>
-              {showResult && (isChosen || isCorrect) && (
+              {selected !== null && (
                 <p className="text-sm mt-1 text-gray-600 dark:text-[#a1a1a6]">{opt.explanation}</p>
               )}
             </button>
           );
         })}
       </div>
+      {selected !== null && (
+        <p className="text-xs text-gray-400 dark:text-[#636366] text-center">
+          {lang === 'ru' ? 'Прочитайте объяснения ко всем вариантам.' : 'Read the explanations for all options.'}
+        </p>
+      )}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AdminModule } from './modules/admin/admin.module';
 import { DailyExamsModule } from './modules/daily-exams/daily-exams.module';
 import { QuizAttemptsModule } from './modules/quiz-attempts/quiz-attempts.module';
+import { CompanyModule } from './modules/company/company.module';
+import { CertificatesModule } from './modules/certificates/certificates.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { QuizAttemptsModule } from './modules/quiz-attempts/quiz-attempts.module
     AdminModule,
     DailyExamsModule,
     QuizAttemptsModule,
+    CompanyModule,
+    CertificatesModule,
   ],
 })
 export class AppModule {}

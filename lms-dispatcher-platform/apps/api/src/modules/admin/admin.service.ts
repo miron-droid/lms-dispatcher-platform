@@ -9,13 +9,29 @@ import { ProgressStatus } from '@prisma/client';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  // Dashboard
-  getDashboard() {
+  // Dashboard — filtered by company for non-SUPER_ADMIN
+  getDashboard(companyId?: string | null) {
+    const userWhere: any = { role: 'STUDENT', isActive: true };
+    if (companyId) userWhere.companyId = companyId;
+
     return Promise.all([
-      this.prisma.user.count({ where: { role: 'STUDENT', isActive: true } }),
-      this.prisma.testAttempt.aggregate({ _avg: { score: true } }),
-      this.prisma.examRequest.count({ where: { status: 'REQUESTED' } }),
-      this.prisma.examRequest.count({ where: { decision: 'PASS' } }),
+      this.prisma.user.count({ where: userWhere }),
+      this.prisma.testAttempt.aggregate({
+        _avg: { score: true },
+        ...(companyId ? { where: { user: { companyId } } } : {}),
+      }),
+      this.prisma.examRequest.count({
+        where: {
+          status: 'REQUESTED',
+          ...(companyId ? { student: { companyId } } : {}),
+        },
+      }),
+      this.prisma.examRequest.count({
+        where: {
+          decision: 'PASS',
+          ...(companyId ? { student: { companyId } } : {}),
+        },
+      }),
     ]).then(([students, avgScore, pendingExams, passedExams]) => ({
       activeStudents: students,
       avgTestScore: Math.round(avgScore._avg.score ?? 0),
@@ -81,10 +97,13 @@ export class AdminService {
     return this.prisma.question.delete({ where: { id } });
   }
 
-  // Detailed progress per student per chapter/lesson
-  async getDetailedProgress() {
+  // Detailed progress per student per chapter/lesson — filtered by company
+  async getDetailedProgress(companyId?: string | null) {
+    const userWhere: any = { role: 'STUDENT', isActive: true };
+    if (companyId) userWhere.companyId = companyId;
+
     const students = await this.prisma.user.findMany({
-      where: { role: 'STUDENT', isActive: true },
+      where: userWhere,
       select: {
         id: true, firstName: true, lastName: true, lastActiveAt: true,
         chapterProgress: {
@@ -327,10 +346,13 @@ export class AdminService {
     };
   }
 
-  // Analytics
-  async getStudentAnalytics() {
+  // Analytics — filtered by company
+  async getStudentAnalytics(companyId?: string | null) {
+    const userWhere: any = { role: 'STUDENT', isActive: true };
+    if (companyId) userWhere.companyId = companyId;
+
     const students = await this.prisma.user.findMany({
-      where: { role: 'STUDENT', isActive: true },
+      where: userWhere,
       select: {
         id: true, firstName: true, lastName: true, lastActiveAt: true,
         chapterProgress: { select: { status: true, testPassed: true, examPassed: true } },
@@ -392,5 +414,174 @@ export class AdminService {
         completedAt: new Date(),
       },
     });
+  }
+
+  // ── Owner-only: Managers Overview ────────────────────────────────────────
+  async getManagersOverview(companyId?: string | null) {
+    const managerWhere: any = { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true };
+    if (companyId) managerWhere.companyId = companyId;
+
+    const managers = await this.prisma.user.findMany({
+      where: managerWhere,
+      select: {
+        id: true, email: true, firstName: true, lastName: true, role: true,
+        createdAt: true, lastActiveAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const result = await Promise.all(managers.map(async (m) => {
+      const studentCount = await this.prisma.user.count({
+        where: { managerId: m.id, isActive: true, role: 'STUDENT' },
+      });
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const actionCount = await this.prisma.auditLog.count({
+        where: { actorId: m.id, createdAt: { gte: thirtyDaysAgo } },
+      });
+
+      const lastLogin = await this.prisma.auditLog.findFirst({
+        where: { actorId: m.id, action: 'LOGIN_SUCCESS' },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true, ipAddress: true },
+      });
+
+      return {
+        ...m,
+        studentCount,
+        actionsLast30d: actionCount,
+        lastLogin: lastLogin?.createdAt ?? null,
+        lastLoginIp: lastLogin?.ipAddress ?? null,
+      };
+    }));
+
+    return result;
+  }
+
+  // ── Owner-only: Manager's Students ───────────────────────────────────────
+  async getManagerStudents(managerId: string) {
+    return this.prisma.user.findMany({
+      where: { managerId, role: 'STUDENT', isActive: true },
+      select: {
+        id: true, email: true, firstName: true, lastName: true,
+        createdAt: true, lastActiveAt: true, totalXP: true, streak: true,
+        chapterProgress: {
+          select: { status: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // ── Owner-only: Manager Activity Log ─────────────────────────────────────
+  async getManagerActivity(managerId: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+    const [logs, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where: { actorId: managerId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.auditLog.count({ where: { actorId: managerId } }),
+    ]);
+    return { logs, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ── Owner-only: Platform Stats ───────────────────────────────────────────
+  async getOwnerStats(companyId?: string | null) {
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const weekAgo = new Date(Date.now() - 7 * 86400000);
+
+    const companyFilter: any = companyId ? { companyId } : {};
+
+    const [totalUsers, totalStudents, totalAdmins, totalManagers,
+           activeToday, usersCreatedThisWeek, loginsToday] = await Promise.all([
+      this.prisma.user.count({ where: { isActive: true, ...companyFilter } }),
+      this.prisma.user.count({ where: { role: 'STUDENT', isActive: true, ...companyFilter } }),
+      this.prisma.user.count({ where: { role: 'ADMIN', isActive: true, ...companyFilter } }),
+      this.prisma.user.count({ where: { role: 'MANAGER', isActive: true, ...companyFilter } }),
+      this.prisma.user.count({
+        where: { lastActiveAt: { gte: todayStart }, ...companyFilter },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: 'USER_CREATED',
+          createdAt: { gte: weekAgo },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: 'LOGIN_SUCCESS',
+          createdAt: { gte: todayStart },
+        },
+      }),
+    ]);
+
+    return { totalUsers, totalStudents, totalAdmins, totalManagers, activeToday, usersCreatedThisWeek, loginsToday };
+  }
+
+  // ── Owner-only: Combined Control Data ────────────────────────────────────
+  async getControlData(companyId?: string | null) {
+    const userWhere: any = { isActive: true };
+    if (companyId) userWhere.companyId = companyId;
+
+    const [users, stats, recentEvents] = await Promise.all([
+      // All users with progress data
+      this.prisma.user.findMany({
+        where: userWhere,
+        select: {
+          id: true, email: true, firstName: true, lastName: true, role: true,
+          createdAt: true, lastActiveAt: true, totalXP: true, streak: true,
+          managerId: true, companyId: true,
+        },
+        orderBy: { lastActiveAt: { sort: 'desc', nulls: 'last' } },
+      }),
+      // Stats
+      Promise.all([
+        this.prisma.user.count({ where: { isActive: true, ...userWhere } }),
+        this.prisma.user.count({
+          where: { lastActiveAt: { gte: new Date(Date.now() - 7 * 86400000) }, isActive: true, ...(companyId ? { companyId } : {}) },
+        }),
+        this.prisma.user.aggregate({ where: { role: 'STUDENT', isActive: true, ...(companyId ? { companyId } : {}) }, _avg: { totalXP: true } }),
+        this.prisma.auditLog.count({
+          where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+        }),
+      ]),
+      // Last 50 audit events
+      this.prisma.auditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    const userList = users.map(u => ({
+      id: u.id,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: u.role,
+      createdAt: u.createdAt,
+      lastActiveAt: u.lastActiveAt,
+      totalXP: u.totalXP,
+      streak: u.streak,
+      managerId: u.managerId,
+      companyId: u.companyId,
+      studentsCount: u.role !== 'STUDENT'
+        ? users.filter(s => s.managerId === u.id && s.role === 'STUDENT').length
+        : undefined,
+    }));
+
+    return {
+      stats: {
+        totalUsers: stats[0],
+        activeLast7d: stats[1],
+        avgStudentXP: Math.round(stats[2]._avg.totalXP ?? 0),
+        eventsToday: stats[3],
+      },
+      users: userList,
+      recentEvents,
+    };
   }
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { LangProvider } from '@/lib/i18n/lang-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { useAuthStore } from '@/lib/stores/auth.store';
+import { TenantProvider } from '@/lib/tenant-context';
 import { authApi } from '@/lib/api/auth';
 
 function AuthBootstrap() {
@@ -26,7 +27,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
   }));
   return (
-    <ThemeProvider>
+    <TenantProvider>
+      <ThemeProvider>
       <LangProvider>
         <QueryClientProvider client={client}>
           <AuthBootstrap />
@@ -34,5 +36,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </QueryClientProvider>
       </LangProvider>
     </ThemeProvider>
+    </TenantProvider>
   );
 }

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/stores/auth.store';
 import { useLang } from '@/lib/i18n/lang-context';
 import { LogoIcon } from '@/components/domain/logo';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTenant } from '@/lib/tenant-context';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const router = useRouter();
   const { t } = useLang();
+  const { company } = useTenant();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +34,7 @@ export default function LoginPage() {
       } catch {
         /* ignore — base user is fine */
       }
-      if (user.role === 'ADMIN' || user.role === 'MANAGER') router.replace('/manager');
+      if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'SUPER_ADMIN') router.replace('/manager');
       else router.replace('/learn');
     } catch (err: any) {
       setError(err.message ?? t('auth_login_failed'));
@@ -51,7 +53,11 @@ export default function LoginPage() {
         <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
           Dispatch<span className="text-emerald-400">GO</span>
         </h1>
-        <p className="text-blue-200/80 mt-2 text-sm lg:text-base">{t('auth_title')}</p>
+        {company ? (
+          <p className="text-emerald-300/90 mt-2 text-sm lg:text-base font-semibold">{company.name}</p>
+        ) : (
+          <p className="text-blue-200/80 mt-2 text-sm lg:text-base">{t('auth_title')}</p>
+        )}
         <p className="text-blue-300/40 mt-1 text-xs tracking-wide">9 chapters · 36 lessons · 100% online</p>
       </div>
 
@@ -89,7 +95,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#636366] hover:text-gray-600 dark:hover:text-[#f5f5f7] transition-colors"
-              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>

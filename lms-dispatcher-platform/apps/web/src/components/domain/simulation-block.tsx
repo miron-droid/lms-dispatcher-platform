@@ -60,13 +60,18 @@ function FeedbackBanner({ feedback, lang }: { feedback: FeedbackState; lang: Lan
     <div
       className={cn(
         'rounded-2xl p-4 mt-4 border flex gap-3 items-start transition-all duration-300',
-        feedback.correct ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200',
+        feedback.correct
+          ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
+          : 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/30',
       )}
     >
       {feedback.correct
-        ? <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-        : <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />}
-      <p className={cn('text-sm leading-relaxed', feedback.correct ? 'text-green-800' : 'text-orange-800')}>
+        ? <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+        : <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />}
+      <p className={cn(
+        'text-sm leading-relaxed',
+        feedback.correct ? 'text-green-800 dark:text-green-300' : 'text-orange-800 dark:text-orange-300',
+      )}>
         {lang === 'ru' ? feedback.ru : feedback.en}
       </p>
     </div>
@@ -112,8 +117,8 @@ function IntroScreen({ lang, onNext }: { lang: Lang; onNext: () => void }) {
             : "You are a freight dispatcher. Complete one full work cycle and learn how it works in practice."}
         </p>
       </div>
-      <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 space-y-2">
-        <p className="text-xs font-bold text-brand-700 uppercase tracking-wide mb-3">
+      <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/30 rounded-2xl p-4 space-y-2">
+        <p className="text-xs font-bold text-brand-700 dark:text-brand-300 uppercase tracking-wide mb-3">
           {lang === 'ru' ? 'В этой симуляции ты:' : 'In this simulation you will:'}
         </p>
         {(lang === 'ru' ? [
@@ -127,7 +132,7 @@ function IntroScreen({ lang, onNext }: { lang: Lang; onNext: () => void }) {
           '🚛 Track your driver on the route',
           '⚡ Handle an unexpected situation professionally',
         ]).map((item, i) => (
-          <p key={i} className="text-sm text-brand-800">{item}</p>
+          <p key={i} className="text-sm text-brand-800 dark:text-brand-200">{item}</p>
         ))}
       </div>
       <NextBtn onClick={onNext} label="Start Simulation →" labelRu="Начать симуляцию →" lang={lang} />
@@ -172,8 +177,8 @@ function ContextScreen({ lang, onNext }: { lang: Lang; onNext: () => void }) {
           </div>
         ))}
       </div>
-      <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-        <p className="text-sm text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/30 rounded-xl p-3">
+        <p className="text-sm text-amber-800 dark:text-amber-300">
           {lang === 'ru'
             ? '🎯 Задача: найти прибыльный груз с высоким RPM (ставка за милю) и хорошей общей суммой.'
             : '🎯 Goal: find a profitable load with high RPM (rate per mile) and a solid total payout.'}
@@ -258,8 +263,8 @@ function LoadBoardScreen({ lang, onOption, feedback }: { lang: Lang; onOption: O
               className={cn(
                 'w-full text-left rounded-2xl border-2 p-4 transition-all duration-200',
                 !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-brand-300 active:border-brand-500',
-                showResult && isSelected && isCorrect && 'border-green-500 bg-green-50',
-                showResult && isSelected && !isCorrect && 'border-red-400 bg-red-50',
+                showResult && isSelected && isCorrect && 'border-green-500 bg-green-50 dark:bg-green-500/10',
+                showResult && isSelected && !isCorrect && 'border-red-400 bg-red-50 dark:bg-red-500/10',
                 showResult && !isSelected && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-40',
               )}
             >
@@ -275,7 +280,11 @@ function LoadBoardScreen({ lang, onOption, feedback }: { lang: Lang; onOption: O
                 <div className="text-right">
                   <div className={cn(
                     'text-sm font-bold px-3 py-1 rounded-xl',
-                    load.rpmNum >= 2.5 ? 'bg-green-100 text-green-700' : load.rpmNum >= 2.0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700',
+                    load.rpmNum >= 2.5
+                      ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300'
+                      : load.rpmNum >= 2.0
+                        ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300'
+                        : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300',
                   )}>
                     {load.rpm}<span className="text-xs font-normal">/mi</span>
                   </div>
@@ -380,12 +389,14 @@ function BrokerCallScreen({ lang, onOption, feedback }: { lang: Lang; onOption: 
               className={cn(
                 'w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm leading-relaxed',
                 !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-brand-300 active:border-brand-500',
-                showResult && isSelected && opt.correct && 'border-green-500 bg-green-50',
-                showResult && isSelected && !opt.correct && 'border-red-400 bg-red-50',
+                showResult && isSelected && opt.correct && 'border-green-500 bg-green-50 dark:bg-green-500/10',
+                showResult && isSelected && !opt.correct && 'border-red-400 bg-red-50 dark:bg-red-500/10',
                 showResult && !isSelected && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-40',
               )}
             >
-              {lang === 'ru' ? opt.labelRu : opt.label}
+              <span className="text-gray-800 dark:text-[#f5f5f7]">
+                {lang === 'ru' ? opt.labelRu : opt.label}
+              </span>
             </button>
           );
         })}
@@ -423,17 +434,17 @@ function ConfirmationScreen({ lang, onNext }: { lang: Lang; onNext: () => void }
             : 'You successfully "booked a load" — confirmed a shipment for your driver'}
         </p>
       </div>
-      <div className="bg-green-50 rounded-2xl p-5 border border-green-100 space-y-3">
-        <p className="text-xs font-bold text-green-700 uppercase tracking-wide">📄 Rate Confirmation</p>
+      <div className="bg-green-50 dark:bg-green-500/10 rounded-2xl p-5 border border-green-100 dark:border-green-500/30 space-y-3">
+        <p className="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">📄 Rate Confirmation</p>
         {details.map((d, i) => (
           <div key={i} className="flex justify-between items-start gap-2 text-sm">
-            <span className="text-green-600 font-medium flex-shrink-0">{d.label}</span>
+            <span className="text-green-600 dark:text-green-400 font-medium flex-shrink-0">{d.label}</span>
             <span className="text-gray-800 dark:text-[#f5f5f7] font-semibold text-right">{d.value}</span>
           </div>
         ))}
       </div>
-      <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-        <p className="text-sm text-blue-800">
+      <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-3 border border-blue-100 dark:border-blue-500/30">
+        <p className="text-sm text-blue-800 dark:text-blue-300">
           {lang === 'ru'
             ? '✅ Ты отправил водителю Джеймсу все детали: адрес загрузки, время и инструкции.'
             : '✅ You sent driver James all the details: pickup address, time, and instructions.'}
@@ -565,8 +576,8 @@ function ProblemScreen({ lang, onOption, feedback }: { lang: Lang; onOption: OnO
           {lang === 'ru' ? 'Пришло сообщение от водителя' : 'You receive a message from the driver'}
         </p>
       </div>
-      <div className="bg-green-50 rounded-2xl p-4 border border-green-100">
-        <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">
+      <div className="bg-green-50 dark:bg-green-500/10 rounded-2xl p-4 border border-green-100 dark:border-green-500/30">
+        <p className="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide mb-2">
           {lang === 'ru' ? '💬 Сообщение от Джеймса' : '💬 Message from James'}
         </p>
         <p className="text-sm text-gray-800 dark:text-[#f5f5f7] leading-relaxed">
@@ -590,12 +601,14 @@ function ProblemScreen({ lang, onOption, feedback }: { lang: Lang; onOption: OnO
               className={cn(
                 'w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm leading-relaxed',
                 !showResult && 'border-gray-200 dark:border-[rgba(255,255,255,0.08)] hover:border-brand-300 active:border-brand-500',
-                showResult && isSelected && opt.correct && 'border-green-500 bg-green-50',
-                showResult && isSelected && !opt.correct && 'border-red-400 bg-red-50',
+                showResult && isSelected && opt.correct && 'border-green-500 bg-green-50 dark:bg-green-500/10',
+                showResult && isSelected && !opt.correct && 'border-red-400 bg-red-50 dark:bg-red-500/10',
                 showResult && !isSelected && 'border-gray-100 dark:border-[rgba(255,255,255,0.06)] opacity-40',
               )}
             >
-              {lang === 'ru' ? opt.labelRu : opt.label}
+              <span className="text-gray-800 dark:text-[#f5f5f7]">
+                {lang === 'ru' ? opt.labelRu : opt.label}
+              </span>
             </button>
           );
         })}
@@ -638,15 +651,15 @@ function DeliveryScreen({ lang, onNext }: { lang: Lang; onNext: () => void }) {
       </div>
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="flex items-center gap-3 bg-green-50 rounded-xl p-3 border border-green-100">
-            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-            <p className="text-sm text-green-800">{item}</p>
+          <div key={i} className="flex items-center gap-3 bg-green-50 dark:bg-green-500/10 rounded-xl p-3 border border-green-100 dark:border-green-500/30">
+            <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <p className="text-sm text-green-800 dark:text-green-300">{item}</p>
           </div>
         ))}
       </div>
-      <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-        <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">Broker</p>
-        <p className="text-sm text-blue-800 italic">
+      <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-100 dark:border-blue-500/30">
+        <p className="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wide mb-2">Broker</p>
+        <p className="text-sm text-blue-800 dark:text-blue-200 italic">
           {lang === 'ru'
             ? '"Спасибо, что предупредил заранее. Бывает. Будем работать снова."'
             : '"Thanks for the heads-up. These things happen. We\'ll work together again."'}
@@ -715,25 +728,25 @@ function SummaryScreen({ lang, onComplete }: { lang: Lang; onComplete: () => voi
         </div>
       </div>
 
-      <div className="bg-green-50 rounded-2xl border border-green-100 p-4 space-y-2">
-        <p className="text-xs font-bold text-green-700 uppercase tracking-wide">
+      <div className="bg-green-50 dark:bg-green-500/10 rounded-2xl border border-green-100 dark:border-green-500/30 p-4 space-y-2">
+        <p className="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">
           {lang === 'ru' ? '💰 Финансовый результат' : '💰 Financial Result'}
         </p>
         {financials.map((f, i) => (
-          <div key={i} className={cn('flex justify-between text-sm', f.bold && 'border-t border-green-200 pt-2 mt-1')}>
-            <span className={f.bold ? 'font-bold text-green-700' : 'text-green-700'}>{f.label}</span>
-            <span className={f.bold ? 'font-bold text-green-700' : 'font-semibold text-gray-700 dark:text-[#a1a1a6]'}>{f.value}</span>
+          <div key={i} className={cn('flex justify-between text-sm', f.bold && 'border-t border-green-200 dark:border-green-500/30 pt-2 mt-1')}>
+            <span className={f.bold ? 'font-bold text-green-700 dark:text-green-300' : 'text-green-700 dark:text-green-300'}>{f.label}</span>
+            <span className={f.bold ? 'font-bold text-green-700 dark:text-green-300' : 'font-semibold text-gray-700 dark:text-[#f5f5f7]'}>{f.value}</span>
           </div>
         ))}
       </div>
 
-      <div className="bg-purple-50 rounded-xl border border-purple-100 p-4">
-        <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-3">
+      <div className="bg-purple-50 dark:bg-purple-500/10 rounded-xl border border-purple-100 dark:border-purple-500/30 p-4">
+        <p className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide mb-3">
           {lang === 'ru' ? '🏆 Навыки отработаны' : '🏆 Skills Demonstrated'}
         </p>
         <div className="flex flex-wrap gap-2">
           {skills.map((s, i) => (
-            <span key={i} className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">{s}</span>
+            <span key={i} className="text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200 px-3 py-1 rounded-full font-medium">{s}</span>
           ))}
         </div>
       </div>
@@ -791,12 +804,12 @@ export function SimulationBlock() {
 
   if (completed) {
     return (
-      <div className="mt-10 rounded-2xl bg-green-50 border border-green-200 p-8 text-center space-y-4">
-        <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-        <h3 className="text-lg font-bold text-green-800">
+      <div className="mt-10 rounded-2xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 p-8 text-center space-y-4">
+        <CheckCircle className="w-12 h-12 text-green-500 dark:text-green-400 mx-auto" />
+        <h3 className="text-lg font-bold text-green-800 dark:text-green-300">
           {lang === 'ru' ? 'Симуляция пройдена!' : 'Simulation Completed!'}
         </h3>
-        <p className="text-sm text-green-700">
+        <p className="text-sm text-green-700 dark:text-green-200">
           {lang === 'ru'
             ? 'Ты успешно прошёл симуляцию рабочего дня диспетчера.'
             : 'You successfully completed the dispatcher workday simulation.'}
